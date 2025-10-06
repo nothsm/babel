@@ -6,8 +6,9 @@
  *
  * compile and run with: clang -O0 -Wall -Wconversion -Werror --std=c99 -g -o babel babel.c && ./babel
  */
-#include <stdio.h> /* for EOF, getchar, printf, putchar */
-#include <string.h> /* for strcmp */
+#include <stdbool.h> /* for bool */
+#include <stdio.h>   /* for EOF, getchar, printf, putchar */
+#include <string.h>  /* for strcmp */
 #include "babel.h"
 
 void prologue() {
@@ -28,9 +29,17 @@ void interact() {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc == 1 || !((argc >= 2 && strcmp(argv[1], "-q") == 0) || (argc >= 3 && strcmp(argv[1], "-q") == 0)))
+    bool quiet_mode = false;
+    bool filter_mode = false;
+    for (int i = 0; i < argc; i++) {
+        quiet_mode = quiet_mode || (strcmp(argv[i], "-q") == 0);
+        filter_mode = filter_mode || (strcmp(argv[i], "-f") == 0);
+    }
+
+    if (!quiet_mode)
         prologue();
-    if (argc == 1 || (argc >= 2 && strcmp(argv[1], "-f") != 0) || (argc >= 3 && strcmp(argv[1], "-f") != 0))
+
+    if (!filter_mode)
         interact();
 
     /* int c, nl; */
