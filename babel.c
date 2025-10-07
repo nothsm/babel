@@ -6,20 +6,22 @@
  *
  * compile and run with: clang -O0 -Wall -Wconversion -Werror --std=c99 -g -o babel babel.c && ./babel
  */
+#include <assert.h>  /* for assert */
 #include <stdbool.h> /* for bool */
 #include <stdio.h>   /* for EOF, getline, printf, putchar, size_t, ssize_t, stdin */
+#include <stdlib.h>  /* for free */
 #include <string.h>  /* for strcmp */
 #include "babel.h"
 
-unsigned int mygetdelim(char* line, unsigned int lim, char delim) {
+unsigned int mygetline(char *line, unsigned int lim) {
     int c;
     unsigned int i = 0;
 
-    while (i < lim - 1 && (c = getchar()) != delim)
+    while (i < lim - 1 && (c = getchar()) != EOF && c != '\n')
         line[i++] = c;
-    line[i++] = '\0';
+    line[i] = '\0';
 
-    if (i == lim)
+    if (i == lim - 1)
         fprintf(stderr, "babel: mygetdelim: reached capacity\n");
 
     return i;
@@ -30,17 +32,18 @@ void prologue() {
     printf("\n%s\n", BABEL_LOGO);
 }
 
+/* TODO: this breaks on EOF */
 void interact() {
     char line[BUFSIZE] = {0};
 
     while (1) {
         printf("babel> ");
-        mygetdelim(line, BUFSIZE, '\n');
+        mygetline(line, BUFSIZE);
         printf("%s\n", line);
     }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     bool quiet_mode = false;
     bool filter_mode = false;
     for (int i = 0; i < argc; i++) {
@@ -48,14 +51,46 @@ int main(int argc, char* argv[]) {
         filter_mode = filter_mode || (strcmp(argv[i], "-f") == 0);
     }
 
+    /* char* s = "foo baz"; */
+    char *s, *tofree, *tok;
+    /* why does strsep break if s is on the stack? */
+    tofree = s = strdup("foo baz"); /* TODO: free this */
+    printf("%s\n", s);
+
+    tok = strsep(&s, " ");
+    printf("\ns = %s, tok = %s\n", s, tok);
+
+    /*
+     * s -> ['f', 'o', 'o', ' ', 'b', 'a', 'z', '\0']
+     * &s -> s -> ['f', 'o', 'o', ' ', 'b', 'a', 'z', '\0']
+     */
+
+    tok = strsep(&s, " ");
+    printf("\ns = %s, tok = %s\n", s, tok);
+
+    /* tok = strsep(&s, " "); */
+    /* printf("\ns = %s, tok = %s\n", s, tok); */
+
+
     if (!quiet_mode)
         prologue();
 
     if (filter_mode) {
-        char buf[BUFSIZE] = {0};
+        char line[BUFSIZE] = {0};
 
-        mygetdelim(buf, BUFSIZE, EOF);
-        printf("%s\n", buf);
+        while (mygetline(line, BUFSIZE) > 0) {
+            int x, y;
+
+            for (int i = 0; line[i] != '\0'; i++) {
+                if (line[i] == ' ')
+                    printf("X");
+                else
+                    printf("%c", line[i]);
+            }
+            printf("\n");
+
+            /* printf("%s\n", line); */
+        }
     } else
         interact();
 }
@@ -70,7 +105,11 @@ int main(int argc, char* argv[]) {
  *   - scheme
  *   - c
  *   - synthesizer
+ *
+ *   - tensor/ml (extra), (target code from tensor programs)
  *   - verilog? (extra)
+ *   - quantum (extra)
+ *   - cryptography (extra)
  *
  * - allow users to specify rewrite rules
  *
