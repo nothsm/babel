@@ -10,6 +10,8 @@
 "▀▀ ▀▀▀     ▀▀▀▀ ▀▀  ▀▀ ▀▀▀      ▀▀▀▀▀      ▀▀▀▀  "
 
 #define BUFSIZE 128
+#define FEATSIZE 2
+#define DATASIZE 100
 
 typedef struct {
     int x;

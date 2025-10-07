@@ -13,6 +13,11 @@
 #include <string.h>  /* for strcmp */
 #include "babel.h"
 
+void saminit(sample *sam, int x, int y) {
+    sam->x = x;
+    sam->y = y;
+}
+
 unsigned int mygetline(char *line, unsigned int lim) {
     int c;
     unsigned int i = 0;
@@ -51,48 +56,29 @@ int main(int argc, char *argv[]) {
         filter_mode = filter_mode || (strcmp(argv[i], "-f") == 0);
     }
 
-    /* char* s = "foo baz"; */
-    char *s, *tofree, *tok;
-    /* why does strsep break if s is on the stack? */
-    tofree = s = strdup("foo baz"); /* TODO: free this */
-    printf("%s\n", s);
-
-    tok = strsep(&s, " ");
-    printf("\ns = %s, tok = %s\n", s, tok);
-
-    /*
-     * s -> ['f', 'o', 'o', ' ', 'b', 'a', 'z', '\0']
-     * &s -> s -> ['f', 'o', 'o', ' ', 'b', 'a', 'z', '\0']
-     */
-
-    tok = strsep(&s, " ");
-    printf("\ns = %s, tok = %s\n", s, tok);
-
-    /* tok = strsep(&s, " "); */
-    /* printf("\ns = %s, tok = %s\n", s, tok); */
-
-
     if (!quiet_mode)
         prologue();
 
+    sample samples[DATASIZE] = {0};
+    unsigned int nsamples = 0;
     if (filter_mode) {
         char line[BUFSIZE] = {0};
-
         while (mygetline(line, BUFSIZE) > 0) {
-            int x, y;
+            char *tok;
+            char *s = line;
+            int features[FEATSIZE] = {0};
+            unsigned int nfeat = 0;
+            while ((tok = strsep(&s, " ")) != NULL) /* TODO: Why can't I pass line here? */
+                features[nfeat++] = atoi(tok);
 
-            for (int i = 0; line[i] != '\0'; i++) {
-                if (line[i] == ' ')
-                    printf("X");
-                else
-                    printf("%c", line[i]);
-            }
-            printf("\n");
-
-            /* printf("%s\n", line); */
+            saminit(samples + (nsamples++), features[0], features[1]);
         }
     } else
         interact();
+
+    printf("%d\n", nsamples);
+    for (int i = 0; i < nsamples; i++)
+        printf("%d %d\n", samples[i].x, samples[i].y);
 }
 
 /*
