@@ -8,23 +8,21 @@
  */
 #include <stdbool.h> /* for bool */
 #include <stdio.h>   /* for EOF, getline, printf, putchar, size_t, ssize_t, stdin */
-#include <stdlib.h>  /* for free */
 #include <string.h>  /* for strcmp */
 #include "babel.h"
 
-void putline() {
-    char* line = NULL;
-    size_t linecap = 0;
-    ssize_t linelen;
+unsigned int mygetdelim(char* line, unsigned int lim, char delim) {
+    int c;
+    unsigned int i = 0;
 
-    if ((linelen = getline(&line, &linecap, stdin)) > 0)
-        printf("%s\n", line);
-    else {
-        /* TODO: test this branch */
-        fprintf(stderr, "babel: putline: error getting line\n");
-        exit(1);
-    }
-    free(line);
+    while (i < lim - 1 && (c = getchar()) != delim)
+        line[i++] = c;
+    line[i++] = '\0';
+
+    if (i == lim)
+        fprintf(stderr, "babel: mygetdelim: reached capacity\n");
+
+    return i;
 }
 
 void prologue() {
@@ -33,9 +31,12 @@ void prologue() {
 }
 
 void interact() {
+    char line[BUFSIZE] = {0};
+
     while (1) {
         printf("babel> ");
-        putline();
+        mygetdelim(line, BUFSIZE, '\n');
+        printf("%s\n", line);
     }
 }
 
@@ -50,9 +51,12 @@ int main(int argc, char* argv[]) {
     if (!quiet_mode)
         prologue();
 
-    if (filter_mode)
-        putline();
-    else
+    if (filter_mode) {
+        char buf[BUFSIZE] = {0};
+
+        mygetdelim(buf, BUFSIZE, EOF);
+        printf("%s\n", buf);
+    } else
         interact();
 }
 
