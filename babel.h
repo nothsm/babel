@@ -9,7 +9,8 @@
   "███▄▄██▀  ██▄▄▄███  ███▄▄██▀  ▀██▄▄▄▄█    ██▄▄▄  \n"                        \
   "▀▀ ▀▀▀     ▀▀▀▀ ▀▀  ▀▀ ▀▀▀      ▀▀▀▀▀      ▀▀▀▀  "
 
-#define BUFSIZE 128
+#define BUFSIZE 256
+/* #define STRSIZE 6 */
 #define DATASIZE 100
 #define MAXTOKS 2
 #define ARRCAP 12

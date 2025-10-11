@@ -13,11 +13,6 @@
 #include <string.h>  /* for strcmp */
 #include "babel.h"
 
-void sampleinit(Sample *sam, int x, int y) {
-    sam->x = x;
-    sam->y = y;
-}
-
 unsigned int mygetline(char *line, unsigned int lim) {
     int c;
     unsigned int i = 0;
@@ -46,6 +41,11 @@ void interact() {
         mygetline(line, BUFSIZE);
         printf("%s\n", line);
     }
+}
+
+void sampleinit(Sample *sam, int x, int y) {
+    sam->x = x;
+    sam->y = y;
 }
 
 char *bopshow(BinOp *bop) {
@@ -101,12 +101,33 @@ Expr pslookup(Programs *ps, unsigned int i) {
     return ps->buf[i];
 }
 
-Programs synthesize() {
+void psgrow(Programs *ps) {
+    unsigned int len = ps->len;
+    for (int i = 0; i < len; i++) {
+        for (int j = 0; j < len; j++) {
+            BinOp bop = ADD_BINOP(ps->buf + i, ps->buf + j);
+
+            BinOp *copy = calloc(1, sizeof(bop));
+            memmove(copy, &bop, sizeof(bop));
+
+            psput(ps, BINOP_EXPR(copy));
+        }
+    }
+}
+
+void pselim(Programs *ps) {
+    /* TODO */
+}
+
+Programs synthesize(Sample *samples, unsigned int nsamples) {
     Programs ps = {0};
 
+    /* Add terminals to program list */
     psinit(&ps);
-    for (int i = 0; i < 14; i++)
-        psput(&ps, NUM_EXPR(i % 5));
+    for (int i = -1; i <= 1; i++)
+        psput(&ps, NUM_EXPR(i));
+
+    psgrow(&ps);
 
     return ps;
 }
@@ -133,24 +154,7 @@ int main(int argc, char *argv[]) {
     printf("e2   = %s\n", s2);
     printf("eadd = %s\n", sadd);
     free(s2);
-    free(sadd); /* This doesn't free subexpressions */
-    /* printf("%s\n", eshow(&eadd)); */
-
-    Programs ps = synthesize();
-    /* psput(&ps, e2); */
-    /* psput(&ps, e2); */
-    /* psput(&ps, eadd); */
-
-    /* Expr e; */
-    /* for (int i = 0; i < ps.len; i++) { */
-    /*     e = pslookup(&ps, i); */
-    /*     printf("%s\n", eshow(&e)); */
-    /* } */
-    /* printf("0: %d\n", pslookup(&ps, 0).as.num); */
-    /* printf("%d") */
-    /* printf("%d %d\n", pslookup(&ps, 2).as.binop->e1->as.num, pslookup(&ps, 2).as.binop->e2->as.num); */
-
-    psdeinit(&ps);
+    free(sadd); /* TODO: This doesn't free subexpressions */
 
     if (!quiet_mode)
         prologue();
@@ -174,9 +178,19 @@ int main(int argc, char *argv[]) {
     } else
         interact();
 
-    printf("%d\n", nsamples);
+    printf("\nSAMPLES\n");
+    printf("len(samples) = %d\n", nsamples);
     for (int i = 0; i < nsamples; i++)
         printf("%d %d\n", samples[i].x, samples[i].y);
+
+    Programs ps = synthesize(samples, nsamples);
+    printf("\nPROGRAMS\n");
+    for (int i = 0; i < ps.len; i++) {
+        Expr e = pslookup(&ps, i);
+        printf("%s\n", eshow(&e));
+    }
+
+    psdeinit(&ps);
 }
 
 /*
