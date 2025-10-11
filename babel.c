@@ -13,7 +13,7 @@
 #include <string.h>  /* for strcmp */
 #include "babel.h"
 
-void saminit(sample *sam, int x, int y) {
+void saminit(Sample *sam, int x, int y) {
     sam->x = x;
     sam->y = y;
 }
@@ -56,29 +56,39 @@ int main(int argc, char *argv[]) {
         filter_mode = filter_mode || (strcmp(argv[i], "-f") == 0);
     }
 
+    BinOp add23 = ADD_BINOP(2, 3);
+
+    AST ast_num = NUM_AST(5);
+    AST ast_bin = BINOP_AST(ADD_BINOP(2, 3));
+    AST ast_bin2 = BINOP_AST(add23);
+
+    printf("%d %d\n", ast_bin.as.binop.arg1, ast_bin.as.binop.arg2);
+    printf("%d %d\n", ast_bin2.as.binop.arg1, ast_bin2.as.binop.arg2);
+
     if (!quiet_mode)
         prologue();
 
-    sample samples[DATASIZE] = {0};
-    unsigned int nsamples = 0;
+    Sample sams[DATASIZE];
+    unsigned int nsams = 0;
     if (filter_mode) {
         char line[BUFSIZE] = {0};
+
         while (mygetline(line, BUFSIZE) > 0) {
             char *tok;
             char *s = line;
-            int features[FEATSIZE] = {0};
-            unsigned int nfeat = 0;
+            int feats[FEATSIZE] = {0};
+            unsigned int nfeats = 0;
             while ((tok = strsep(&s, " ")) != NULL) /* TODO: Why can't I pass line here? */
-                features[nfeat++] = atoi(tok);
+                feats[nfeats++] = atoi(tok);
 
-            saminit(samples + (nsamples++), features[0], features[1]);
+            saminit(sams + (nsams++), feats[0], feats[1]);
         }
     } else
         interact();
 
-    printf("%d\n", nsamples);
-    for (int i = 0; i < nsamples; i++)
-        printf("%d %d\n", samples[i].x, samples[i].y);
+    printf("%d\n", nsams);
+    for (int i = 0; i < nsams; i++)
+        printf("%d %d\n", sams[i].x, sams[i].y);
 }
 
 /*
