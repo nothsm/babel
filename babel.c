@@ -56,14 +56,16 @@ int main(int argc, char *argv[]) {
         filter_mode = filter_mode || (strcmp(argv[i], "-f") == 0);
     }
 
-    BinOp add23 = ADD_BINOP(2, 3);
+    Expr e2 = NUM_EXPR(2);
+    Expr e3 = NUM_EXPR(3);
+    Expr e5 = NUM_EXPR(5);
 
-    AST ast_num = NUM_AST(5);
-    AST ast_bin = BINOP_AST(ADD_BINOP(2, 3));
-    AST ast_bin2 = BINOP_AST(add23);
+    BinOp add23 = ADD_BINOP(&e2, &e3);
 
-    printf("%d %d\n", ast_bin.as.binop.arg1, ast_bin.as.binop.arg2);
-    printf("%d %d\n", ast_bin2.as.binop.arg1, ast_bin2.as.binop.arg2);
+    Expr eadd = BINOP_EXPR(add23);
+
+    printf("%d %d\n", add23.e1->as.num, add23.e2->as.num);
+    printf("%d %d\n", eadd.as.binop.e1->as.num, eadd.as.binop.e2->as.num);
 
     if (!quiet_mode)
         prologue();

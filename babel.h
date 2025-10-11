@@ -18,26 +18,32 @@ typedef struct {
   int y;
 } Sample;
 
+
+typedef struct Expr Expr;
+typedef struct BinOp BinOp;
+
 typedef enum { BINOP_ADD, BINOP_MUL } BinOpType;
 
-typedef struct {
+/* TODO: Do I want pointers here? */
+struct BinOp {
     BinOpType ty;
-    int arg1;
-    int arg2;
-} BinOp;
+    Expr *e1;
+    Expr *e2;
+} ;
 
-#define ADD_BINOP(x, y) ((BinOp){BINOP_ADD, .arg1 = x, .arg2 = y})
-#define MUL_BINOP(x, y) ((BinOp){BINOP_MUL, .arg1 = x, .arg2 = y})
+#define ADD_BINOP(x, y) ((BinOp){BINOP_ADD, .e1 = x, .e2 = y})
+#define MUL_BINOP(x, y) ((BinOp){BINOP_MUL, .e1 = x, .e2 = y})
 
-typedef enum { AST_NUM, AST_BINOP } ASTType;
+typedef enum { EXPR_NUM, EXPR_BINOP } ExprType;
 
-typedef struct {
-    ASTType ty;
+/* expression/ast datatype for the grammar */
+struct Expr {
+    ExprType ty;
     union {
         int num;
         BinOp binop;
     } as;
-} AST;
+};
 
-#define NUM_AST(v) ((AST){.ty = AST_NUM, {.num = v}})
-#define BINOP_AST(v) ((AST){.ty = AST_BINOP, {.binop = v}})
+#define NUM_EXPR(v) ((Expr){.ty = EXPR_NUM, {.num = v}})
+#define BINOP_EXPR(v) ((Expr){.ty = EXPR_BINOP, {.binop = v}})
