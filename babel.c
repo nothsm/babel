@@ -97,17 +97,17 @@ void psput(Programs *ps, Expr p) {
     ps->buf[ps->len++] = p;
 }
 
-Expr pslookup(Programs *ps, unsigned int i) {
-    return ps->buf[i];
+Expr *pslookup(Programs *ps, unsigned int i) {
+    return ps->buf + i;
 }
 
 void psgrow(Programs *ps) {
     unsigned int len = ps->len;
     for (int i = 0; i < len; i++) {
         for (int j = 0; j < len; j++) {
-            BinOp bop = ADD_BINOP(ps->buf + i, ps->buf + j);
+            BinOp bop = ADD_BINOP(pslookup(ps, i), pslookup(ps, j));
 
-            BinOp *copy = calloc(1, sizeof(bop));
+            BinOp *copy = calloc(1, sizeof(bop)); /* TODO: leak */
             memmove(copy, &bop, sizeof(bop));
 
             psput(ps, BINOP_EXPR(copy));
@@ -149,12 +149,12 @@ int main(int argc, char *argv[]) {
     /* Expr eadd = BINOP_EXPR(&add23); */
     Expr eadd = BINOP_EXPR(&ADD_BINOP(&NUM_EXPR(2), &NUM_EXPR(3)));
 
-    char *s2 = eshow(&e2);
-    char *sadd = eshow(&eadd);
-    printf("e2   = %s\n", s2);
-    printf("eadd = %s\n", sadd);
-    free(s2);
-    free(sadd); /* TODO: This doesn't free subexpressions */
+    /* char *s2 = eshow(&e2); */
+    /* char *sadd = eshow(&eadd); */
+    /* printf("e2   = %s\n", s2); */
+    /* printf("eadd = %s\n", sadd); */
+    /* free(s2); */
+    /* free(sadd); /\* TODO: This doesn't free subexpressions *\/ */
 
     if (!quiet_mode)
         prologue();
@@ -179,16 +179,17 @@ int main(int argc, char *argv[]) {
         interact();
 
     printf("\nSAMPLES\n");
-    printf("len(samples) = %d\n", nsamples);
+    printf("n = %d\n", nsamples);
     for (int i = 0; i < nsamples; i++)
         printf("%d %d\n", samples[i].x, samples[i].y);
 
     Programs ps = synthesize(samples, nsamples);
     printf("\nPROGRAMS\n");
-    for (int i = 0; i < ps.len; i++) {
-        Expr e = pslookup(&ps, i);
-        printf("%s\n", eshow(&e));
-    }
+    printf("n = %d\n", ps.len);
+    /* for (int i = 0; i < ps.len; i++) { */
+    /*     /\* Expr e = pslookup(&ps, i); *\/ */
+    /*     printf("%s\n", eshow(pslookup(&ps, i))); */
+    /* } */
 
     psdeinit(&ps);
 }
