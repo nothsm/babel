@@ -13,7 +13,7 @@
 #include <string.h>  /* for strcmp */
 #include "babel.h"
 
-void saminit(Sample *sam, int x, int y) {
+void sampleinit(Sample *sam, int x, int y) {
     sam->x = x;
     sam->y = y;
 }
@@ -27,7 +27,7 @@ unsigned int mygetline(char *line, unsigned int lim) {
     line[i] = '\0';
 
     if (i == lim - 1)
-        fprintf(stderr, "babel: mygetdelim: reached capacity\n");
+        fprintf(stderr, "babel: mygetline: reached capacity\n");
 
     return i;
 }
@@ -48,6 +48,58 @@ void interact() {
     }
 }
 
+char *eshow(Expr *e) {
+    char buf[BUFSIZE] = {0}; /* TODO: This is definitely too big */
+
+    switch (e->tag) {
+        case EXPR_BINOP: /* TODO: memory leak here */
+            snprintf(buf, BUFSIZE, "Expr (BinOp (%s %s))", eshow(e->as.binop->e1), eshow(e->as.binop->e2));
+            return strndup(buf, BUFSIZE);
+        case EXPR_NUM:
+            snprintf(buf, BUFSIZE, "Expr (Num %d)", e->as.num);
+            return strndup(buf, BUFSIZE); /* TODO: off-by-1 error? */
+        default: assert(false);
+    }
+}
+
+/* TODO: This allocates */
+/* TODO: Should I split an allocation function separately? */
+void psinit(Programs *ps) {
+    ps->buf = calloc(ARRCAP, sizeof(PROGRAM_T));
+    ps->cap = ARRCAP;
+    ps->len = 0;
+}
+
+void psdeinit(Programs *ps) {
+    free(ps->buf);
+
+    ps->buf = NULL;
+    ps->cap = 0;
+    ps->len = 0;
+}
+
+void psput(Programs *ps, Expr p) {
+    if (ps->len == ps->cap) {
+        ps->buf = realloc(ps->buf, sizeof(*(ps->buf)) * 2 * ps->cap);
+        ps->cap = 2 * ps->cap;
+    }
+    ps->buf[ps->len++] = p;
+}
+
+Expr pslookup(Programs *ps, unsigned int i) {
+    return ps->buf[i];
+}
+
+Programs synthesize() {
+    Programs ps = {0};
+
+    psinit(&ps);
+    for (int i = 0; i < 14; i++)
+        psput(&ps, NUM_EXPR(i % 5));
+
+    return ps;
+}
+
 int main(int argc, char *argv[]) {
     bool quiet_mode = false;
     bool filter_mode = false;
@@ -62,35 +114,55 @@ int main(int argc, char *argv[]) {
 
     BinOp add23 = ADD_BINOP(&e2, &e3);
 
-    Expr eadd = BINOP_EXPR(add23);
+    /* Expr eadd = BINOP_EXPR(&add23); */
+    Expr eadd = BINOP_EXPR(&ADD_BINOP(&NUM_EXPR(2), &NUM_EXPR(3)));
 
-    printf("%d %d\n", add23.e1->as.num, add23.e2->as.num);
-    printf("%d %d\n", eadd.as.binop.e1->as.num, eadd.as.binop.e2->as.num);
+    char *s2 = eshow(&e2);
+    char *sadd = eshow(&eadd);
+    printf("%s\n", s2);
+    printf("%s\n", sadd);
+    free(s2);
+    /* printf("%s\n", eshow(&eadd)); */
+
+    Programs ps = synthesize();
+    /* psput(&ps, e2); */
+    /* psput(&ps, e2); */
+    /* psput(&ps, eadd); */
+
+    for (int i = 0; i < ps.len; i++)
+        printf("%d ", pslookup(&ps, i).as.num);
+    printf("\n");
+    /* printf("0: %d\n", pslookup(&ps, 0).as.num); */
+    /* printf("%d") */
+    /* printf("%d %d\n", pslookup(&ps, 2).as.binop->e1->as.num, pslookup(&ps, 2).as.binop->e2->as.num); */
+
+    psdeinit(&ps);
 
     if (!quiet_mode)
         prologue();
 
-    Sample sams[DATASIZE];
-    unsigned int nsams = 0;
+    Sample samples[DATASIZE] = {0};
+    unsigned int nsamples = 0;
     if (filter_mode) {
         char line[BUFSIZE] = {0};
 
         while (mygetline(line, BUFSIZE) > 0) {
+            /* TODO: This code is too dense */
             char *tok;
             char *s = line;
-            int feats[FEATSIZE] = {0};
-            unsigned int nfeats = 0;
+            int nums[MAXTOKS] = {0};
+            unsigned int nnums = 0;
             while ((tok = strsep(&s, " ")) != NULL) /* TODO: Why can't I pass line here? */
-                feats[nfeats++] = atoi(tok);
+                nums[nnums++] = atoi(tok);
 
-            saminit(sams + (nsams++), feats[0], feats[1]);
+            sampleinit(samples + (nsamples++), nums[0], nums[1]);
         }
     } else
         interact();
 
-    printf("%d\n", nsams);
-    for (int i = 0; i < nsams; i++)
-        printf("%d %d\n", sams[i].x, sams[i].y);
+    printf("%d\n", nsamples);
+    for (int i = 0; i < nsamples; i++)
+        printf("%d %d\n", samples[i].x, samples[i].y);
 }
 
 /*

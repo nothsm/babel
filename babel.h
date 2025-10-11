@@ -10,8 +10,11 @@
   "▀▀ ▀▀▀     ▀▀▀▀ ▀▀  ▀▀ ▀▀▀      ▀▀▀▀▀      ▀▀▀▀  "
 
 #define BUFSIZE 128
-#define FEATSIZE 2
 #define DATASIZE 100
+#define MAXTOKS 2
+#define ARRCAP 12
+
+#define PROGRAM_T Expr
 
 typedef struct {
   int x;
@@ -26,9 +29,9 @@ typedef enum { BINOP_ADD, BINOP_MUL } BinOpType;
 
 /* TODO: Do I want pointers here? */
 struct BinOp {
-    BinOpType ty;
-    Expr *e1;
-    Expr *e2;
+    BinOpType tag;
+    Expr     *e1;
+    Expr     *e2;
 } ;
 
 #define ADD_BINOP(x, y) ((BinOp){BINOP_ADD, .e1 = x, .e2 = y})
@@ -38,12 +41,18 @@ typedef enum { EXPR_NUM, EXPR_BINOP } ExprType;
 
 /* expression/ast datatype for the grammar */
 struct Expr {
-    ExprType ty;
+    ExprType tag;
     union {
-        int num;
-        BinOp binop;
+        int    num;
+        BinOp *binop;
     } as;
 };
 
-#define NUM_EXPR(v) ((Expr){.ty = EXPR_NUM, {.num = v}})
-#define BINOP_EXPR(v) ((Expr){.ty = EXPR_BINOP, {.binop = v}})
+#define NUM_EXPR(v) ((Expr){.tag = EXPR_NUM, {.num = v}})
+#define BINOP_EXPR(v) ((Expr){.tag = EXPR_BINOP, {.binop = v}})
+
+typedef struct {
+    Expr        *buf;
+    unsigned int len;
+    unsigned int cap;
+} Programs;
