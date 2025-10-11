@@ -56,3 +56,6 @@ typedef struct {
     unsigned int len;
     unsigned int cap;
 } Programs;
+
+char *bopshow(BinOp *);
+char *eshow(Expr *);

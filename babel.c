@@ -48,12 +48,23 @@ void interact() {
     }
 }
 
+char *bopshow(BinOp *bop) {
+    char buf[BUFSIZE] = {0};
+
+    switch (bop->tag) {
+        case BINOP_ADD:
+            snprintf(buf, BUFSIZE, "BinOp (Add (%s) (%s))", eshow(bop->e1), eshow(bop->e2));
+            return strndup(buf, BUFSIZE);
+        default: assert(false);
+    }
+}
+
 char *eshow(Expr *e) {
     char buf[BUFSIZE] = {0}; /* TODO: This is definitely too big */
 
     switch (e->tag) {
         case EXPR_BINOP: /* TODO: memory leak here */
-            snprintf(buf, BUFSIZE, "Expr (BinOp (%s %s))", eshow(e->as.binop->e1), eshow(e->as.binop->e2));
+            snprintf(buf, BUFSIZE, "Expr (%s)", bopshow(e->as.binop));
             return strndup(buf, BUFSIZE);
         case EXPR_NUM:
             snprintf(buf, BUFSIZE, "Expr (Num %d)", e->as.num);
@@ -119,9 +130,10 @@ int main(int argc, char *argv[]) {
 
     char *s2 = eshow(&e2);
     char *sadd = eshow(&eadd);
-    printf("%s\n", s2);
-    printf("%s\n", sadd);
+    printf("e2   = %s\n", s2);
+    printf("eadd = %s\n", sadd);
     free(s2);
+    free(sadd); /* This doesn't free subexpressions */
     /* printf("%s\n", eshow(&eadd)); */
 
     Programs ps = synthesize();
@@ -129,9 +141,11 @@ int main(int argc, char *argv[]) {
     /* psput(&ps, e2); */
     /* psput(&ps, eadd); */
 
-    for (int i = 0; i < ps.len; i++)
-        printf("%d ", pslookup(&ps, i).as.num);
-    printf("\n");
+    /* Expr e; */
+    /* for (int i = 0; i < ps.len; i++) { */
+    /*     e = pslookup(&ps, i); */
+    /*     printf("%s\n", eshow(&e)); */
+    /* } */
     /* printf("0: %d\n", pslookup(&ps, 0).as.num); */
     /* printf("%d") */
     /* printf("%d %d\n", pslookup(&ps, 2).as.binop->e1->as.num, pslookup(&ps, 2).as.binop->e2->as.num); */
