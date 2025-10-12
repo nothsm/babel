@@ -11,6 +11,7 @@
 #include <stdio.h>   /* for EOF, getline, printf, putchar, size_t, ssize_t, stdin */
 #include <stdlib.h>  /* for free */
 #include <string.h>  /* for strcmp */
+#include <time.h>
 #include "babel.h"
 
 unsigned int mygetline(char *line, unsigned int lim) {
@@ -54,6 +55,9 @@ char *bopshow(BinOp *bop) {
     switch (bop->tag) {
         case BINOP_ADD:
             snprintf(buf, BUFSIZE, "BinOp (Add (%s) (%s))", eshow(bop->e1), eshow(bop->e2));
+            return strndup(buf, BUFSIZE);
+        case BINOP_MUL:
+            snprintf(buf, BUFSIZE, "BinOp (Mul (%s) (%s))", eshow(bop->e1), eshow(bop->e2));
             return strndup(buf, BUFSIZE);
         default: assert(false);
     }
@@ -105,12 +109,22 @@ void psgrow(Programs *ps) {
     unsigned int len = ps->len;
     for (int i = 0; i < len; i++) {
         for (int j = 0; j < len; j++) {
-            BinOp bop = ADD_BINOP(pslookup(ps, i), pslookup(ps, j));
+            Expr *e1 = pslookup(ps, i);
+            Expr *e2 = pslookup(ps, j);
+            Expr *e1cpy = calloc(1, sizeof(*e1));
+            memmove(e1cpy, e1, sizeof(*e1));
+            Expr *e2cpy = calloc(1, sizeof(*e2));
+            memmove(e2cpy, e2, sizeof(*e2));
 
-            BinOp *copy = calloc(1, sizeof(bop)); /* TODO: leak */
-            memmove(copy, &bop, sizeof(bop));
+            BinOp add = ADD_BINOP(e1cpy, e2cpy);
+            BinOp *addcpy = calloc(1, sizeof(add)); /* TODO: leak */
+            memmove(addcpy, &add, sizeof(add));
+            psput(ps, BINOP_EXPR(addcpy));
 
-            psput(ps, BINOP_EXPR(copy));
+            BinOp mul = MUL_BINOP(e1cpy, e2cpy);
+            BinOp *mulcpy = calloc(1, sizeof(mul));
+            memmove(mulcpy, &mul, sizeof(mul));
+            psput(ps, BINOP_EXPR(mulcpy));
         }
     }
 }
@@ -119,15 +133,16 @@ void pselim(Programs *ps) {
     /* TODO */
 }
 
-Programs synthesize(Sample *samples, unsigned int nsamples) {
+Programs synthesize(Sample *samples, unsigned int nsamples, unsigned int depth) {
     Programs ps = {0};
 
     /* Add terminals to program list */
     psinit(&ps);
-    for (int i = -1; i <= 1; i++)
+    for (int i = -10; i <= 10; i++)
         psput(&ps, NUM_EXPR(i));
 
-    psgrow(&ps);
+    for (int i = 0; i < depth; i++)
+        psgrow(&ps);
 
     return ps;
 }
@@ -183,13 +198,23 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < nsamples; i++)
         printf("%d %d\n", samples[i].x, samples[i].y);
 
-    Programs ps = synthesize(samples, nsamples);
+    clock_t tic = clock();
+
+    Programs ps = synthesize(samples, nsamples, 2);
+
+    clock_t toc = clock();
+    unsigned int dt = (((double)(toc - tic) / CLOCKS_PER_SEC) * 1000000000);
+
     printf("\nPROGRAMS\n");
     printf("n = %d\n", ps.len);
-    /* for (int i = 0; i < ps.len; i++) { */
-    /*     /\* Expr e = pslookup(&ps, i); *\/ */
-    /*     printf("%s\n", eshow(pslookup(&ps, i))); */
-    /* } */
+    printf("dt = %dns\n", dt);
+    printf("\n");
+    for (int i = 0; i < 10; i++) {
+        Expr *e = pslookup(&ps, i);
+        printf("%s\n", eshow(e));
+    }
+    if (ps.len > 10)
+        printf("...\n");
 
     psdeinit(&ps);
 }
