@@ -10,17 +10,16 @@
   "▀▀ ▀▀▀     ▀▀▀▀ ▀▀  ▀▀ ▀▀▀      ▀▀▀▀▀      ▀▀▀▀  "
 
 #define BUFSIZE 256
-/* #define STRSIZE 6 */
-#define DATASIZE 100
-#define MAXTOKS 2
+#define MEMCAP (64 * 1024) /* 64KB mem lim */
 #define ARRCAP 12
 
 #define PROGRAM_T Expr
 
 typedef struct {
-  int x;
-  int y;
-} Sample;
+  char *buf;
+  unsigned int len;
+  unsigned int cap;
+} Arena;
 
 typedef struct {
   int *xs;
@@ -28,7 +27,6 @@ typedef struct {
   unsigned int len;
   unsigned int cap;
 } Samples;
-
 
 typedef struct Expr Expr;
 typedef struct BinOp BinOp;

@@ -15,6 +15,49 @@
 #include <time.h>
 #include "babel.h"
 
+Arena barena; /* babel arena */
+
+void ainit(Arena *a) {
+    a->buf = calloc(MEMCAP, 1);
+    a->len = 0;
+    a->cap = MEMCAP;
+}
+
+void adeinit(Arena *a) {
+    free(a->buf);
+    a->buf = NULL;
+    a->len = 0;
+    a->cap = 0;
+}
+
+/* TODO: This is unaligned */
+void *aalloc(Arena *a, unsigned int nbytes) {
+    void *ptr;
+
+    assert(a->len + nbytes < a->cap);
+
+    ptr = a->buf + a->len;
+    a->len += nbytes;
+    return ptr;
+}
+
+/* TODO: this is super unoptimized */
+/* TODO: test this shit!!! */
+void *arealloc(Arena *a, void *oldptr, unsigned int nbytes) {
+    void *newptr;
+
+    assert(a->len + nbytes < a->cap);
+
+    newptr = aalloc(a, nbytes);
+
+    char *op = oldptr;
+    char *np = newptr;
+    for (int i = 0; i < nbytes; i++) /* TODO: add an amemcpy */
+        np[i] = op[i];
+
+    return newptr;
+}
+
 unsigned int mygetline(char *line, unsigned int lim) {
     int c;
     unsigned int i = 0;
@@ -130,9 +173,11 @@ void pselim(Programs *ps, Samples *ss) {
     /* TODO */
 }
 
-void ssinit(Samples *ss) {
-    ss->xs = calloc(ARRCAP, sizeof(int));
-    ss->ys = calloc(ARRCAP, sizeof(int));
+void ssinit(Samples *ss, Arena *a) {
+    /* ss->xs = calloc(ARRCAP, sizeof(int)); */
+    /* ss->ys = calloc(ARRCAP, sizeof(int)); */
+    ss->xs = aalloc(a, ARRCAP * sizeof(int));
+    ss->ys = aalloc(a, ARRCAP * sizeof(int));
     ss->cap = ARRCAP;
     ss->len = 0;
 }
@@ -144,10 +189,12 @@ void ssdeinit(Samples *ss) {
     ss->len = 0;
 }
 
-void ssput(Samples *ss, int x, int y) {
+void ssput(Samples *ss, int x, int y, Arena *a) {
     if (ss->len == ss->cap) {
-        ss->xs = realloc(ss->xs, sizeof(*(ss->xs)) * 2 * ss->cap);
-        ss->ys = realloc(ss->ys, sizeof(*(ss->ys)) * 2 * ss->cap);
+        /* ss->xs = realloc(ss->xs, sizeof(*(ss->xs)) * 2 * ss->cap); */
+        /* ss->ys = realloc(ss->ys, sizeof(*(ss->ys)) * 2 * ss->cap); */
+        ss->xs = arealloc(a, ss->xs, sizeof(*(ss->xs)) * 2 * ss->cap);
+        ss->ys = arealloc(a, ss->xs, sizeof(*(ss->ys)) * 2 * ss->cap);
         ss->cap = 2 * ss->cap;
     }
     ss->xs[ss->len] = x;
@@ -180,8 +227,10 @@ int main(int argc, char *argv[]) {
     if (!quiet_mode)
         prologue();
 
+    ainit(&barena);
+
     Samples ss = {0};
-    ssinit(&ss);
+    ssinit(&ss, &barena);
     if (filter_mode) {
         char line[BUFSIZE] = {0};
 
@@ -193,7 +242,7 @@ int main(int argc, char *argv[]) {
             char *s = line;
             x = atoi((tok = strsep(&s, " ")));
             y = atoi((tok = strsep(&s, " ")));
-            ssput(&ss, x, y);
+            ssput(&ss, x, y, &barena);
         }
     } else
         interact();
@@ -205,7 +254,7 @@ int main(int argc, char *argv[]) {
 
     clock_t tic = clock();
 
-    Programs ps = sssynthesize(&ss, 2);
+    Programs ps = sssynthesize(&ss, 1);
 
     clock_t toc = clock();
     unsigned int dt = (((double)(toc - tic) / CLOCKS_PER_SEC) * 1000000000); /* time in ns */
@@ -221,8 +270,8 @@ int main(int argc, char *argv[]) {
     if (ps.len > 10)
         printf("...\n");
 
+    adeinit(&barena);
     psdeinit(&ps);
-    ssdeinit(&ss);
 }
 
 /*
