@@ -5,6 +5,7 @@
  * babel speaks all languages
  *
  * compile and run with: clang -O0 -Wall -Wconversion -Werror --std=c99 -g -o babel babel.c && ./babel
+ * cat data/fib.txt | make filter-leaks
  */
 #include <assert.h>  /* for assert */
 #include <stdbool.h> /* for bool */
@@ -44,11 +45,7 @@ void interact() {
     }
 }
 
-void sampleinit(Sample *sam, int x, int y) {
-    sam->x = x;
-    sam->y = y;
-}
-
+/* TODO: BinOp and Expr are tightly coupled right now. Fix later? */
 char *bopshow(BinOp *bop) {
     char buf[BUFSIZE] = {0};
 
@@ -129,11 +126,36 @@ void psgrow(Programs *ps) {
     }
 }
 
-void pselim(Programs *ps) {
+void pselim(Programs *ps, Samples *ss) {
     /* TODO */
 }
 
-Programs synthesize(Sample *samples, unsigned int nsamples, unsigned int depth) {
+void ssinit(Samples *ss) {
+    ss->xs = calloc(ARRCAP, sizeof(int));
+    ss->ys = calloc(ARRCAP, sizeof(int));
+    ss->cap = ARRCAP;
+    ss->len = 0;
+}
+
+void ssdeinit(Samples *ss) {
+    free(ss->xs);
+    free(ss->ys);
+    ss->cap = 0;
+    ss->len = 0;
+}
+
+void ssput(Samples *ss, int x, int y) {
+    if (ss->len == ss->cap) {
+        ss->xs = realloc(ss->xs, sizeof(*(ss->xs)) * 2 * ss->cap);
+        ss->ys = realloc(ss->ys, sizeof(*(ss->ys)) * 2 * ss->cap);
+        ss->cap = 2 * ss->cap;
+    }
+    ss->xs[ss->len] = x;
+    ss->ys[ss->len] = y;
+    ss->len += 1;
+}
+
+Programs sssynthesize(Samples *ss, unsigned int depth) {
     Programs ps = {0};
 
     /* Add terminals to program list */
@@ -155,59 +177,42 @@ int main(int argc, char *argv[]) {
         filter_mode = filter_mode || (strcmp(argv[i], "-f") == 0);
     }
 
-    Expr e2 = NUM_EXPR(2);
-    Expr e3 = NUM_EXPR(3);
-    Expr e5 = NUM_EXPR(5);
-
-    BinOp add23 = ADD_BINOP(&e2, &e3);
-
-    /* Expr eadd = BINOP_EXPR(&add23); */
-    Expr eadd = BINOP_EXPR(&ADD_BINOP(&NUM_EXPR(2), &NUM_EXPR(3)));
-
-    /* char *s2 = eshow(&e2); */
-    /* char *sadd = eshow(&eadd); */
-    /* printf("e2   = %s\n", s2); */
-    /* printf("eadd = %s\n", sadd); */
-    /* free(s2); */
-    /* free(sadd); /\* TODO: This doesn't free subexpressions *\/ */
-
     if (!quiet_mode)
         prologue();
 
-    Sample samples[DATASIZE] = {0};
-    unsigned int nsamples = 0;
+    Samples ss = {0};
+    ssinit(&ss);
     if (filter_mode) {
         char line[BUFSIZE] = {0};
 
         while (mygetline(line, BUFSIZE) > 0) {
-            /* TODO: This code is too dense */
             char *tok;
-            char *s = line;
-            int nums[MAXTOKS] = {0};
-            unsigned int nnums = 0;
-            while ((tok = strsep(&s, " ")) != NULL) /* TODO: Why can't I pass line here? */
-                nums[nnums++] = atoi(tok);
+            int x, y;
 
-            sampleinit(samples + (nsamples++), nums[0], nums[1]);
+            /* TODO: extend this to > 2 tokens */
+            char *s = line;
+            x = atoi((tok = strsep(&s, " ")));
+            y = atoi((tok = strsep(&s, " ")));
+            ssput(&ss, x, y);
         }
     } else
         interact();
 
     printf("\nSAMPLES\n");
-    printf("n = %d\n", nsamples);
-    for (int i = 0; i < nsamples; i++)
-        printf("%d %d\n", samples[i].x, samples[i].y);
+    printf("n = %d\n", ss.len);
+    for (int i = 0; i < ss.len; i++)
+        printf("%d %d\n", ss.xs[i], ss.ys[i]);
 
     clock_t tic = clock();
 
-    Programs ps = synthesize(samples, nsamples, 2);
+    Programs ps = sssynthesize(&ss, 2);
 
     clock_t toc = clock();
-    unsigned int dt = (((double)(toc - tic) / CLOCKS_PER_SEC) * 1000000000);
+    unsigned int dt = (((double)(toc - tic) / CLOCKS_PER_SEC) * 1000000000); /* time in ns */
 
     printf("\nPROGRAMS\n");
     printf("n = %d\n", ps.len);
-    printf("dt = %dns\n", dt);
+    printf("dt = %d\n", dt);
     printf("\n");
     for (int i = 0; i < 10; i++) {
         Expr *e = pslookup(&ps, i);
@@ -217,6 +222,7 @@ int main(int argc, char *argv[]) {
         printf("...\n");
 
     psdeinit(&ps);
+    ssdeinit(&ss);
 }
 
 /*

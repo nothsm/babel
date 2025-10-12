@@ -22,6 +22,13 @@ typedef struct {
   int y;
 } Sample;
 
+typedef struct {
+  int *xs;
+  int *ys;
+  unsigned int len;
+  unsigned int cap;
+} Samples;
+
 
 typedef struct Expr Expr;
 typedef struct BinOp BinOp;
