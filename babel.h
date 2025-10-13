@@ -14,6 +14,7 @@
 #define MEMCAP (128 * 1024 * 1024) /* 128MB mem lim... TODO: decrease this shit! */
 #define ARRCAP 1024 /* TODO: decrease this */
 #define MAXPROGRAMS (2 * 1024 * 1024) /* 2MB limit... TODO: decrease this */
+#define NSHOW 20
 
 #define PROGRAM_T Expr
 
@@ -45,7 +46,7 @@ struct BinOp {
 #define ADD_BINOP(x, y) ((BinOp){BINOP_ADD, .e1 = x, .e2 = y})
 #define MUL_BINOP(x, y) ((BinOp){BINOP_MUL, .e1 = x, .e2 = y})
 
-typedef enum { EXPR_NUM, EXPR_BINOP } ExprType;
+typedef enum { EXPR_NUM, EXPR_INPUT, EXPR_BINOP } ExprType;
 
 /* expression/ast datatype for the grammar */
 struct Expr {
@@ -56,7 +57,8 @@ struct Expr {
     } as;
 };
 
-#define NUM_EXPR(v) ((Expr){.tag = EXPR_NUM, {.num = v}})
+#define NUM_EXPR(v)   ((Expr){.tag = EXPR_NUM,   {.num = v}})
+#define INPUT_EXPR()  ((Expr){.tag = EXPR_INPUT, {.num = 0}})
 #define BINOP_EXPR(v) ((Expr){.tag = EXPR_BINOP, {.binop = v}})
 
 typedef struct {

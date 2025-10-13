@@ -128,35 +128,40 @@ char *eshow(Expr *e) {
 
     char *s;
     switch (e->tag) {
+        case EXPR_NUM:
+            snprintf(buf, BUFSIZE, "Expr (Num %d)", e->as.num);
+            return strndup(buf, BUFSIZE); /* TODO: off-by-1 error? */
+        case EXPR_INPUT:
+            snprintf(buf, BUFSIZE, "Expr Input");
+            return strndup(buf, BUFSIZE);
         case EXPR_BINOP: /* TODO: memory leak here */
             s = bopshow(e->as.binop);
             snprintf(buf, BUFSIZE, "Expr (%s)", s);
             free(s);
             return strndup(buf, BUFSIZE);
-        case EXPR_NUM:
-            snprintf(buf, BUFSIZE, "Expr (Num %d)", e->as.num);
-            return strndup(buf, BUFSIZE); /* TODO: off-by-1 error? */
         default: assert(false);
     }
 }
 
-int eeval(Expr *e) {
+int eeval(Expr *e, int input) {
     int x, y;
     switch (e->tag) {
+        case EXPR_NUM:
+            return e->as.num;
+        case EXPR_INPUT:
+            return input;
         case EXPR_BINOP:
             switch (e->as.binop->tag) {
                 case BINOP_ADD:
-                    x = eeval(e->as.binop->e1);
-                    y = eeval(e->as.binop->e2);
+                    x = eeval(e->as.binop->e1, input);
+                    y = eeval(e->as.binop->e2, input);
                     return x + y;
                 case BINOP_MUL:
-                    x = eeval(e->as.binop->e1);
-                    y = eeval(e->as.binop->e2);
+                    x = eeval(e->as.binop->e1, input);
+                    y = eeval(e->as.binop->e2, input);
                     return x * y;
                 default: assert(false);
             }
-        case EXPR_NUM:
-            return e->as.num;
         default: assert(false);
     }
 }
@@ -216,8 +221,6 @@ void pselim(Programs *ps, Samples *ss) {
 }
 
 void ssinit(Samples *ss, Arena *a) {
-    /* ss->xs = calloc(ARRCAP, sizeof(int)); */
-    /* ss->ys = calloc(ARRCAP, sizeof(int)); */
     ss->xs = aalloc(a, ARRCAP * sizeof(int), alignof(int));
     ss->ys = aalloc(a, ARRCAP * sizeof(int), alignof(int));
     ss->cap = ARRCAP;
@@ -233,8 +236,6 @@ void ssdeinit(Samples *ss) {
 
 void ssput(Samples *ss, int x, int y, Arena *a) {
     if (ss->len == ss->cap) {
-        /* ss->xs = realloc(ss->xs, sizeof(*(ss->xs)) * 2 * ss->cap); */
-        /* ss->ys = realloc(ss->ys, sizeof(*(ss->ys)) * 2 * ss->cap); */
         ss->xs = arealloc(a, ss->xs, sizeof(*(ss->xs)) * 2 * ss->cap, alignof(*(ss->xs)));
         ss->ys = arealloc(a, ss->xs, sizeof(*(ss->ys)) * 2 * ss->cap, alignof(*(ss->ys)));
         ss->cap = 2 * ss->cap;
@@ -247,8 +248,10 @@ void ssput(Samples *ss, int x, int y, Arena *a) {
 Programs sssynthesize(Samples *ss, unsigned int depth, Arena *a) {
     Programs ps = {0};
 
-    /* Add terminals to program list */
     psinit(&ps, a);
+
+    /* Add terminals to program list */
+    psput(&ps, INPUT_EXPR());
     for (int i = -10; i <= 10; i++)
         psput(&ps, NUM_EXPR(i));
 
@@ -305,20 +308,42 @@ int main(int argc, char *argv[]) {
     printf("n = %d\n", ps.len);
     printf("dt = %d\n", dt);
     printf("\n");
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < NSHOW; i++) {
         Expr *e = pslookup(&ps, i);
         char *s = eshow(e);
-        printf("%s %d\n", s, eeval(e));
+        printf("%s %d\n", s, eeval(e, 1));
         free(s);
     }
-    if (ps.len > 10)
+    if (ps.len > NSHOW)
         printf("...\n");
-    for (int i = ps.len - 5; i < ps.len; i++) {
+    for (int i = ps.len - NSHOW; i < ps.len; i++) {
         Expr *e = pslookup(&ps, i);
         char *s = eshow(e);
-        printf("%s %d\n", s, eeval(e));
+        printf("%s %d\n", s, eeval(e, 1));
         free(s);
     }
+
+    printf("\n");
+    unsigned int candidates = 0;
+    for (int i = 0; i < ps.len; i++) {
+        Expr *e = pslookup(&ps, i);
+
+        bool verify = true;
+        for (int i = 0; i < ss.len && verify; i++)
+            verify = verify && (eeval(e, ss.xs[i]) == ss.ys[i]);
+
+        if (verify) {
+            candidates += 1;
+            if (candidates <= NSHOW) {
+                char *s = eshow(e);
+                printf("%s\n", s);
+                free(s);
+            }
+        }
+    }
+    if (candidates > NSHOW)
+        printf("...\n");
+    printf("\ncandidates = %d\n", candidates);
 
     adeinit(&barena);
 }
