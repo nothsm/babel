@@ -26,6 +26,140 @@ void ainit(Arena *a) {
     a->cap = MEMCAP;
 }
 
+/*
+ * - Rec needs parent?
+ *
+ * Let Input = 3.
+ *
+ * (Add (Rec Input) 1)
+ * (Add (Add (Rec Input) 1))
+ * (Add (Add (Add (Rec Input) 1) 1) 1)
+ * (Add (Add (Add 0 1) 1) 1)
+ *
+ * (Add (Rec Input) 1)
+ * 1 + (Add (Rec (Input - 1)) 1)
+ *
+ * Let x = (Add (Rec (Add Input (Num -1))) (Num 1))
+ *
+ * 1) with context
+ * (eeval (Add (Rec (Add Input (Num -1)))
+ *             (Num 1))
+ *        NULL
+ *        3)
+ * { eval Add args}
+ * = (+ (eeval (Rec (Add Input (Num -1))) x 3)
+ *      (eeval (Num 1) x 3))
+ * { eval Rec }
+ * = (+ (eeval x
+ *             NULL
+ *             (eeval (Add Input (Num -1)) x 3))
+ *      (eeval (Num 1) x 3))
+ * { eval Add, Input, Num }
+ * = (+ (eeval x NULL 2)
+ *      (eeval (Num 1) x 3))
+ * { substitute x }
+ * = (+  (eeval (Add (Rec (Add Input (Num -1)))
+ *                   (Num 1))
+ *              NULL
+ *              2)
+ *       (eeval (Num 1) x 3))
+ * { eval Add args }
+ * = (+  (+ (eeval (Rec (Add Input (Num -1))) x 2)
+ *          (eeval (Num 1) x 2))
+ *       (eeval (Num 1) x 3))
+ * { eval Rec }
+ * = (+  (+ (eeval x
+ *                 NULL
+ *                 (eeval (Add Input (Num -1)) x 2))
+ *          (eeval (Num 1) x 2))
+ *       (eeval (Num 1) x 3))
+ * { eval Add, Input, Num }
+ * = (+  (+ (eeval x NULL 1)
+ *          (eeval (Num 1) x 2))
+ *       (eeval (Num 1) x 3))
+ * { substitute x }
+ * = (+  (+ (eeval (Add (Rec (Add Input (Num -1)))
+ *                 (Num 1))
+ *                 NULL
+ *                 1)
+ *          (eeval (Num 1) x 2))
+ *       (eeval (Num 1) x 3))
+ * { eval Add args }
+ * = (+ (+ (+ (eeval (Rec (Add Input (Num -1))) x 1)
+ *            (eeval (Num 1) x 1))
+ *         (eeval (Num 1) x 2))
+ *      (eeval (Num 1) x 3))
+ * { eval Rec }
+ * = (+ (+ (+ (eeval x
+ *                   NULL
+ *                   (eeval (Add Input (Num -1)) x 1))
+ *            (eeval (Num 1) x 1))
+ *         (eeval (Num 1) x 2))
+ *      (eeval (Num 1) x 3))
+ * { eval Add, Input, Num }
+ * = (+ (+ (+ (eeval x NULL 0)
+ *            (eeval (Num 1) x 1))
+ *         (eeval (Num 1) x 2))
+ *      (eeval (Num 1) x 3))
+ * { substitute x }
+ * = (+ (+ (+ (eeval (Add (Rec (Add Input (Num -1)))
+ *                        (Num 1))
+ *                   NULL
+ *                   0)
+ *            (eeval (Num 1) x 1))
+ *         (eeval (Num 1) x 2))
+ *      (eeval (Num 1) x 3))
+ * { eval Add args }
+ * = (+ (+ (+ (+ (eeval (Rec (Add Input (Num -1))) x 0)
+ *               (eeval (Num 1) x 0))
+ *            (eeval (Num 1) x 1))
+ *         (eeval (Num 1) x 2))
+ *      (eeval (Num 1) x 3))
+ * { eval Rec }
+ * = (+ (+ (+ (+ 0
+ *               (eeval (Num 1) x 0))
+ *            (eeval (Num 1) x 1))
+ *         (eeval (Num 1) x 2))
+ *      (eeval (Num 1) x 3))
+ * { eval Add, Num }
+ * = 4
+ *
+ * 2) without context
+ * (eeval (Rec (Add Input (Num -1))) NULL 1)
+ * = (eeval (Rec (Add Input (Num -1))) NULL (eeval (Add Input (Num -1)) x 1))
+ * = (eeval (Rec (Add Input (Num -1))) NULL 0)
+ * = 0
+ *
+ * (eeval (Add (Rec (Add Input (Num -1)) x) 1) 0)
+ *
+ * (eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) 3)
+ * = (eeval (Rec (Add Input (Num -1)) x) 3) + (eeval (Num 1) 3)                                                                                              [eval0 Add]
+ * = (eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) (eeval (Add Input (Num -1)) 3)) + (eeval (Num 1) 3)                                                   [eval Rec]
+ * = (eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) ((eeval Input 3) + (eeval (Num -1)))) + (eeval (Num 1) 3)                                             [eval0 Add']
+ * = (eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) (3 + (eeval (Num -1)))) + (eeval (Num 1) 3)                                                           [eval Input]
+ * = (eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) (3 + -1)) + (eeval (Num 1) 3)                                                                         [eval Num]
+ * = (eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) 2) + (eeval (Num 1) 3)                                                                                [eval1 Add']
+ * = ((eeval (Rec (Add Input (Num -1)) x) 2) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                                        [eval0 Add'']
+ * = ((eeval (Add (Rec (Add Input (Num -1)) x) (Num 1))  (eeval (Add Input (Num -1)) 2)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                            [eval Rec]
+ * = ((eeval (Add (Rec (Add Input (Num -1)) x) (Num 1))  ((eeval Input 2) + (eeval (Num -1) 2))) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                    [eval0 Add''']
+ * = ((eeval (Add (Rec (Add Input (Num -1)) x) (Num 1))  (2 + (eeval (Num -1) 2))) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                  [eval Input]
+ * = ((eeval (Add (Rec (Add Input (Num -1)) x) (Num 1))  (2 + -1)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                  [eval Num]
+ * = ((eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) 1) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                          [eval1 Add''']
+ * = (((eeval (Rec (Add Input (Num -1)) x) 1) + (eeval (Num 1) 1)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                  [eval0 Add'''']
+ * = (((eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) (eeval (Add Input (Num -1)) 1)) + (eeval (Num 1) 1)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)       [eval Rec]
+ * = (((eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) 0) + (eeval (Num 1) 1)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                    [eval Add''''']
+ * = ((((eeval (Rec (Add Input (Num -1)) x) 0) + (eeval (Num 1) 0)) + (eeval (Num 1) 1)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                            [eval0 Add'''''']
+ * = (((0 + (eeval (Num 1) 0)) + (eeval (Num 1) 1)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                                 [eval Rec]
+ * = (((0 + 1) + (eeval (Num 1) 1)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                                                 [eval Num]
+ * = ((1 + (eeval (Num 1) 1)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                                                       [eval1 Add'''''']
+ * = ((1 + 1) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                                                                       [eval Num]
+ * = (2 + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                                                                             [eval1 Add'''']
+ * = (2 + 1) + (eeval (Num 1) 3)                                                                                                                             [eval Num]
+ * = 3 + (eeval (Num 1) 3)                                                                                                                                   [eval1 Add'']
+ * = 3 + 1                                                                                                                                                   [eval Num]
+ * = 4                                                                                                                                                       [eval1 Add]
+ */
+
 void adeinit(Arena *a) {
     free(a->buf);
     a->buf = NULL;
@@ -108,14 +242,16 @@ char *bopshow(BinOp *bop) {
         case BINOP_ADD:
             s1 = eshow(bop->e1);
             s2 = eshow(bop->e2);
-            snprintf(buf, BUFSIZE, "BinOp Add (%s) (%s)", s1, s2);
+            /* snprintf(buf, BUFSIZE, "BinOp Add (%s) (%s)", s1, s2); */
+            snprintf(buf, BUFSIZE, "(Add %s %s)", s1, s2);
             free(s1);
             free(s2);
             return strndup(buf, BUFSIZE);
         case BINOP_MUL:
             s1 = eshow(bop->e1);
             s2 = eshow(bop->e2);
-            snprintf(buf, BUFSIZE, "BinOp Mul (%s) (%s)", s1, s2);
+            /* snprintf(buf, BUFSIZE, "BinOp Mul (%s) (%s)", s1, s2); */
+            snprintf(buf, BUFSIZE, "(Mul %s %s)", s1, s2);
             free(s1);
             free(s2);
             return strndup(buf, BUFSIZE);
@@ -129,36 +265,58 @@ char *eshow(Expr *e) {
     char *s;
     switch (e->tag) {
         case EXPR_NUM:
-            snprintf(buf, BUFSIZE, "Expr (Num %d)", e->as.num);
+            /* snprintf(buf, BUFSIZE, "Expr (Num %d)", e->as.num); */
+            snprintf(buf, BUFSIZE, "(Num %d)", e->as.num);
             return strndup(buf, BUFSIZE); /* TODO: off-by-1 error? */
         case EXPR_INPUT:
-            snprintf(buf, BUFSIZE, "Expr Input");
+            /* snprintf(buf, BUFSIZE, "Expr Input"); */
+            snprintf(buf, BUFSIZE, "Input");
+            return strndup(buf, BUFSIZE);
+        case EXPR_REC:
+            s = eshow(e->as.rec);
+            /* snprintf(buf, BUFSIZE, "Expr (Rec (%s))", s); */
+            snprintf(buf, BUFSIZE, "(Rec %s)", s); /* TODO: show parent */
+            free(s);
             return strndup(buf, BUFSIZE);
         case EXPR_BINOP: /* TODO: memory leak here */
             s = bopshow(e->as.binop);
-            snprintf(buf, BUFSIZE, "Expr (%s)", s);
+            /* snprintf(buf, BUFSIZE, "Expr (%s)", s); */
+            snprintf(buf, BUFSIZE, "%s", s);
             free(s);
             return strndup(buf, BUFSIZE);
         default: assert(false);
     }
 }
 
-int eeval(Expr *e, int input) {
+/* TODO: add depth/recursion limit */
+/* TODO: isn't this just CPS/coroutines? */
+int eeval(Expr *e, Expr *context, unsigned int depth, int input) {
     int x, y;
+
+    if (depth >= RECLIM)
+        return 0;
+
     switch (e->tag) {
         case EXPR_NUM:
             return e->as.num;
         case EXPR_INPUT:
             return input;
+        case EXPR_REC:
+            if (input <= 1)
+                return 0;
+            else if (context == NULL)
+                return eeval(e, NULL, depth + 1, eeval(e->as.rec, e, depth + 1, input));
+            else
+                return eeval(context, NULL, depth + 1, eeval(e->as.rec, e, depth + 1, input)); /* TODO: be able to "remember" the context's context */
         case EXPR_BINOP:
             switch (e->as.binop->tag) {
                 case BINOP_ADD:
-                    x = eeval(e->as.binop->e1, input);
-                    y = eeval(e->as.binop->e2, input);
+                    x = eeval(e->as.binop->e1, e, depth + 1, input);
+                    y = eeval(e->as.binop->e2, e, depth + 1, input);
                     return x + y;
                 case BINOP_MUL:
-                    x = eeval(e->as.binop->e1, input);
-                    y = eeval(e->as.binop->e2, input);
+                    x = eeval(e->as.binop->e1, e, depth + 1, input);
+                    y = eeval(e->as.binop->e2, e, depth + 1, input);
                     return x * y;
                 default: assert(false);
             }
@@ -199,6 +357,13 @@ Expr *pslookup(Programs *ps, unsigned int i) {
 
 void psgrow(Programs *ps, Arena *a) {
     unsigned int len = ps->len;
+
+    /* TODO: add this back */
+    for (int i = 0; i < len; i++) {
+        Expr *e = pslookup(ps, i);
+        psput(ps, REC_EXPR(e));
+    }
+
     for (int i = 0; i < len; i++) {
         for (int j = 0; j < len; j++) {
             /* TODO: it's not safe to point to yourself because of reallocs */
@@ -261,6 +426,7 @@ Programs sssynthesize(Samples *ss, unsigned int depth, Arena *a) {
     return ps;
 }
 
+/* TODO: add Rec expr (with base case 0) */
 int main(int argc, char *argv[]) {
     bool quiet_mode = false;
     bool filter_mode = false;
@@ -311,26 +477,66 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < NSHOW; i++) {
         Expr *e = pslookup(&ps, i);
         char *s = eshow(e);
-        printf("%s %d\n", s, eeval(e, 1));
+        printf("%s %d %d %d\n", s, eeval(e, NULL, 0, ss.xs[0]), eeval(e, NULL, 0, ss.xs[1]), eeval(e, NULL, 0, ss.xs[2]));
         free(s);
     }
+
+    /* for (int i = 0; i < ps.len; i++) { */
+    /*     Expr *e = pslookup(&ps, i); */
+    /*     char *s = eshow(e); */
+    /*     printf("%s\n", s); */
+    /*     if (strcmp(s, "(Add (Rec (Add Input (Num -1))) (Rec (Add Input (Num -2))))") == 0) { */
+    /*         printf("FOUND FOUND FOUND"); */
+    /*         free(s); */
+    /*         exit(1); */
+    /*     } */
+    /*     free(s); */
+    /* } */
+
     if (ps.len > NSHOW)
         printf("...\n");
     for (int i = ps.len - NSHOW; i < ps.len; i++) {
         Expr *e = pslookup(&ps, i);
         char *s = eshow(e);
-        printf("%s %d\n", s, eeval(e, 1));
+        printf("%s %d %d %d\n", s, eeval(e, NULL, 0, ss.xs[0]), eeval(e, NULL, 0, ss.xs[1]), eeval(e, NULL, 0, ss.xs[2]));
         free(s);
     }
 
+    /*
+     * (eeval (Add (Rec (Add Input (Num -1)))
+     *             (Num 1))
+     *        NULL
+     *        3)
+     *
+     */
+    /* printf("\nTEST\n"); */
+    /* Expr input = INPUT_EXPR(); */
+    /* Expr numneg1 = NUM_EXPR(-1); */
+    /* BinOp bopadd0 = ADD_BINOP(&input, &numneg1); */
+    /* Expr add0 = BINOP_EXPR(&bopadd0); */
+    /* Expr rec = REC_EXPR(&add0); */
+
+    /* Expr num1 = NUM_EXPR(1); */
+
+    /* BinOp bopadd = ADD_BINOP(&rec, &num1); */
+
+    /* Expr add = BINOP_EXPR(&bopadd); */
+
+    /* printf("%s %d\n", eshow(&add), eeval(&add, NULL, 0, 3)); */
+    /* printf("%s %d\n", eshow(&rec), eeval(&rec, NULL, 0, 3)); */
+
+
+
     printf("\n");
+    printf("CANDIDATES\n");
     unsigned int candidates = 0;
     for (int i = 0; i < ps.len; i++) {
         Expr *e = pslookup(&ps, i);
 
         bool verify = true;
-        for (int i = 0; i < ss.len && verify; i++)
-            verify = verify && (eeval(e, ss.xs[i]) == ss.ys[i]);
+        for (int i = 0; i < ss.len && verify; i++) {
+            verify = verify && (eeval(e, NULL, 0, ss.xs[i]) == ss.ys[i]);
+        }
 
         if (verify) {
             candidates += 1;
@@ -353,6 +559,8 @@ int main(int argc, char *argv[]) {
  * - maybe color or make the logo cooler?
  * - add support for piping
  * - add exiting prompt (thank you)
+ * - high performance, simd optimization
+ * - add tensor library
  *
  * - 3 language frontends:
  *   - scheme
