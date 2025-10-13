@@ -108,14 +108,14 @@ char *bopshow(BinOp *bop) {
         case BINOP_ADD:
             s1 = eshow(bop->e1);
             s2 = eshow(bop->e2);
-            snprintf(buf, BUFSIZE, "BinOp (Add (%s) (%s))", s1, s2);
+            snprintf(buf, BUFSIZE, "BinOp Add (%s) (%s)", s1, s2);
             free(s1);
             free(s2);
             return strndup(buf, BUFSIZE);
         case BINOP_MUL:
             s1 = eshow(bop->e1);
             s2 = eshow(bop->e2);
-            snprintf(buf, BUFSIZE, "BinOp (Mul (%s) (%s))", s1, s2);
+            snprintf(buf, BUFSIZE, "BinOp Mul (%s) (%s)", s1, s2);
             free(s1);
             free(s2);
             return strndup(buf, BUFSIZE);
@@ -136,6 +136,27 @@ char *eshow(Expr *e) {
         case EXPR_NUM:
             snprintf(buf, BUFSIZE, "Expr (Num %d)", e->as.num);
             return strndup(buf, BUFSIZE); /* TODO: off-by-1 error? */
+        default: assert(false);
+    }
+}
+
+int eeval(Expr *e) {
+    int x, y;
+    switch (e->tag) {
+        case EXPR_BINOP:
+            switch (e->as.binop->tag) {
+                case BINOP_ADD:
+                    x = eeval(e->as.binop->e1);
+                    y = eeval(e->as.binop->e2);
+                    return x + y;
+                case BINOP_MUL:
+                    x = eeval(e->as.binop->e1);
+                    y = eeval(e->as.binop->e2);
+                    return x * y;
+                default: assert(false);
+            }
+        case EXPR_NUM:
+            return e->as.num;
         default: assert(false);
     }
 }
@@ -179,17 +200,13 @@ void psgrow(Programs *ps, Arena *a) {
             Expr *e1 = pslookup(ps, i);
             Expr *e2 = pslookup(ps, j);
 
-            BinOp add = ADD_BINOP(e1, e2);
-            /* BinOp *addcpy = calloc(1, sizeof(add)); /\* TODO: leak *\/ */
-            BinOp *addcpy = aalloc(a, sizeof(add), alignof(add));
-            memmove(addcpy, &add, sizeof(add));
-            psput(ps, BINOP_EXPR(addcpy));
+            BinOp *add = aalloc(a, sizeof(BinOp), alignof(BinOp));
+            *add = ADD_BINOP(e1, e2); /* TODO: this is slow */
+            psput(ps, BINOP_EXPR(add));
 
-            BinOp mul = MUL_BINOP(e1, e2);
-            /* BinOp *mulcpy = calloc(1, sizeof(mul)); */
-            BinOp *mulcpy = aalloc(a, sizeof(mul), alignof(mul));
-            memmove(mulcpy, &mul, sizeof(mul));
-            psput(ps, BINOP_EXPR(mulcpy));
+            BinOp *mul = aalloc(a, sizeof(BinOp), alignof(BinOp));
+            *mul = MUL_BINOP(e1, e2);
+            psput(ps, BINOP_EXPR(mul));
         }
     }
 }
@@ -288,14 +305,20 @@ int main(int argc, char *argv[]) {
     printf("n = %d\n", ps.len);
     printf("dt = %d\n", dt);
     printf("\n");
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 5; i++) {
         Expr *e = pslookup(&ps, i);
         char *s = eshow(e);
-        printf("%s\n", s);
+        printf("%s %d\n", s, eeval(e));
         free(s);
     }
     if (ps.len > 10)
         printf("...\n");
+    for (int i = ps.len - 5; i < ps.len; i++) {
+        Expr *e = pslookup(&ps, i);
+        char *s = eshow(e);
+        printf("%s %d\n", s, eeval(e));
+        free(s);
+    }
 
     adeinit(&barena);
 }
