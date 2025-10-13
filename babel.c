@@ -5,7 +5,7 @@
  * babel speaks all languages
  *
  * compile and run with: clang -O0 -Wall -Wconversion -Werror --std=c99 -g -o babel babel.c && ./babel
- * cat data/fib.txt | make filter-leaks
+ * cat data/fib.txt | time make filter-leaks
  */
 #include <assert.h>  /* for assert */
 #include <stdbool.h> /* for bool */
@@ -13,12 +13,15 @@
 #include <stdlib.h>  /* for free */
 #include <string.h>  /* for strcmp */
 #include <time.h>
+#include <stdalign.h> /* TODO: remove */
+#include <sys/mman.h>
 #include "babel.h"
 
 Arena barena; /* babel arena */
 
 void ainit(Arena *a) {
     a->buf = calloc(MEMCAP, 1);
+    /* a->buf = mmap(NULL, MEMCAP, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, 0, 0); */
     a->len = 0;
     a->cap = MEMCAP;
 }
@@ -31,10 +34,15 @@ void adeinit(Arena *a) {
 }
 
 /* TODO: This is unaligned */
-void *aalloc(Arena *a, unsigned int nbytes) {
+/* TODO: this has fragmentation */
+void *aalloc(Arena *a, unsigned int nbytes, unsigned int align) {
     void *ptr;
 
     assert(a->len + nbytes < a->cap);
+
+    /* TODO: Do this in O(1) */
+    while (((unsigned long)(a->buf + a->len)) % align != 0)
+        a->len += 1;
 
     ptr = a->buf + a->len;
     a->len += nbytes;
@@ -43,12 +51,13 @@ void *aalloc(Arena *a, unsigned int nbytes) {
 
 /* TODO: this is super unoptimized */
 /* TODO: test this shit!!! */
-void *arealloc(Arena *a, void *oldptr, unsigned int nbytes) {
+/* TODO: what if align changes between calls? */
+void *arealloc(Arena *a, void *oldptr, unsigned int nbytes, unsigned int align) {
     void *newptr;
 
     assert(a->len + nbytes < a->cap);
 
-    newptr = aalloc(a, nbytes);
+    newptr = aalloc(a, nbytes, align);
 
     char *op = oldptr;
     char *np = newptr;
@@ -89,6 +98,7 @@ void interact() {
 }
 
 /* TODO: BinOp and Expr are tightly coupled right now. Fix later? */
+/* TODO: these fine-grained allocations are killing my perf */
 char *bopshow(BinOp *bop) {
     char buf[BUFSIZE] = {0};
 
@@ -134,7 +144,7 @@ char *eshow(Expr *e) {
 /* TODO: Should I split an allocation function separately? */
 void psinit(Programs *ps, Arena *a) {
     /* ps->buf = calloc(MAXPROGRAMS, sizeof(PROGRAM_T)); */
-    ps->buf = aalloc(a, MAXPROGRAMS * sizeof(PROGRAM_T));
+    ps->buf = aalloc(a, MAXPROGRAMS * sizeof(PROGRAM_T), alignof(PROGRAM_T));
     ps->cap = MAXPROGRAMS;
     ps->len = 0;
 }
@@ -171,13 +181,13 @@ void psgrow(Programs *ps, Arena *a) {
 
             BinOp add = ADD_BINOP(e1, e2);
             /* BinOp *addcpy = calloc(1, sizeof(add)); /\* TODO: leak *\/ */
-            BinOp *addcpy = aalloc(a, sizeof(add));
+            BinOp *addcpy = aalloc(a, sizeof(add), alignof(add));
             memmove(addcpy, &add, sizeof(add));
             psput(ps, BINOP_EXPR(addcpy));
 
             BinOp mul = MUL_BINOP(e1, e2);
             /* BinOp *mulcpy = calloc(1, sizeof(mul)); */
-            BinOp *mulcpy = aalloc(a, sizeof(mul));
+            BinOp *mulcpy = aalloc(a, sizeof(mul), alignof(mul));
             memmove(mulcpy, &mul, sizeof(mul));
             psput(ps, BINOP_EXPR(mulcpy));
         }
@@ -191,8 +201,8 @@ void pselim(Programs *ps, Samples *ss) {
 void ssinit(Samples *ss, Arena *a) {
     /* ss->xs = calloc(ARRCAP, sizeof(int)); */
     /* ss->ys = calloc(ARRCAP, sizeof(int)); */
-    ss->xs = aalloc(a, ARRCAP * sizeof(int));
-    ss->ys = aalloc(a, ARRCAP * sizeof(int));
+    ss->xs = aalloc(a, ARRCAP * sizeof(int), alignof(int));
+    ss->ys = aalloc(a, ARRCAP * sizeof(int), alignof(int));
     ss->cap = ARRCAP;
     ss->len = 0;
 }
@@ -208,8 +218,8 @@ void ssput(Samples *ss, int x, int y, Arena *a) {
     if (ss->len == ss->cap) {
         /* ss->xs = realloc(ss->xs, sizeof(*(ss->xs)) * 2 * ss->cap); */
         /* ss->ys = realloc(ss->ys, sizeof(*(ss->ys)) * 2 * ss->cap); */
-        ss->xs = arealloc(a, ss->xs, sizeof(*(ss->xs)) * 2 * ss->cap);
-        ss->ys = arealloc(a, ss->xs, sizeof(*(ss->ys)) * 2 * ss->cap);
+        ss->xs = arealloc(a, ss->xs, sizeof(*(ss->xs)) * 2 * ss->cap, alignof(*(ss->xs)));
+        ss->ys = arealloc(a, ss->xs, sizeof(*(ss->ys)) * 2 * ss->cap, alignof(*(ss->ys)));
         ss->cap = 2 * ss->cap;
     }
     ss->xs[ss->len] = x;
