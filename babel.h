@@ -10,8 +10,10 @@
   "▀▀ ▀▀▀     ▀▀▀▀ ▀▀  ▀▀ ▀▀▀      ▀▀▀▀▀      ▀▀▀▀  "
 
 #define BUFSIZE 256
-#define MEMCAP (64 * 1024) /* 64KB mem lim */
-#define ARRCAP 12
+/* #define MEMCAP (64 * 1024) /\* 64KB mem lim *\/ */
+#define MEMCAP (70 * 1024 * 1024) /* 70MB mem lim... TODO: decrease this shit! */
+#define ARRCAP 1024 /* TODO: decrease this */
+#define MAXPROGRAMS (2 * 1024 * 1024) /* 2MB limit... TODO: decrease this */
 
 #define PROGRAM_T Expr
 
