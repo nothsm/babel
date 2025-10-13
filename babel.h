@@ -11,11 +11,11 @@
 
 #define BUFSIZE 256
 /* #define MEMCAP (64 * 1024) /\* 64KB mem lim *\/ */
-#define MEMCAP (512 * 1024 * 1024) /* 128MB mem lim... TODO: decrease this shit! */
+#define MEMCAP (1024 * 1024 * 1024) /* 256MB mem lim... TODO: decrease this shit! */
 #define ARRCAP 1024 /* TODO: decrease this */
 #define RECLIM 32
-#define MAXPROGRAMS (8 * 1024 * 1024) /* 2MB limit... TODO: decrease this */
-#define NSHOW 100
+#define MAXPROGRAMS (32 * 1024 * 1024) /* 8MB limit... TODO: decrease this */
+#define NSHOW 6
 
 #define PROGRAM_T Expr
 

@@ -4,8 +4,8 @@
  *
  * babel speaks all languages
  *
- * compile and run with: clang -O0 -Wall -Wconversion -Werror --std=c99 -g -o babel babel.c && ./babel
- * cat data/fib.txt | time make filter-leaks
+ * factorial demo: cat data/factorial.txt | make filter
+ * sum demo: cat data/sum.txt | make filter
  */
 #include <assert.h>  /* for assert */
 #include <stdbool.h> /* for bool */
@@ -302,8 +302,16 @@ int eeval(Expr *e, Expr *context, unsigned int depth, int input) {
         case EXPR_INPUT:
             return input;
         case EXPR_REC:
-            if (input <= 1)
-                return 0;
+            if (input <= 1) {
+                if (context == NULL)
+                    return 0;
+                else if (context != NULL && context->tag == EXPR_BINOP && context->as.binop->tag == BINOP_ADD)
+                    return 0;
+                else if (context != NULL && context->tag == EXPR_BINOP && context->as.binop->tag == BINOP_MUL)
+                    return 1;
+                else
+                    return 0;
+            }
             else if (context == NULL)
                 return eeval(e, NULL, depth + 1, eeval(e->as.rec, e, depth + 1, input));
             else
@@ -417,11 +425,17 @@ Programs sssynthesize(Samples *ss, unsigned int depth, Arena *a) {
 
     /* Add terminals to program list */
     psput(&ps, INPUT_EXPR());
-    for (int i = -10; i <= 10; i++)
-        psput(&ps, NUM_EXPR(i));
+    /* for (int i = -10; i <= 10; i++) */
 
-    for (int i = 0; i < depth; i++)
+    /* for (int i = -1; i <= 1; i++) */
+    /*     psput(&ps, NUM_EXPR(i)); */
+    psput(&ps, NUM_EXPR(-2));
+    psput(&ps, NUM_EXPR(-1));
+    psput(&ps, NUM_EXPR(1));
+
+    for (int i = 0; i < depth; i++) {
         psgrow(&ps, a);
+    }
 
     return ps;
 }
@@ -458,14 +472,14 @@ int main(int argc, char *argv[]) {
     } else
         interact();
 
-    printf("\nSAMPLES\n");
-    printf("n = %d\n", ss.len);
-    for (int i = 0; i < ss.len; i++)
-        printf("%d %d\n", ss.xs[i], ss.ys[i]);
+    /* printf("\nSAMPLES\n"); */
+    /* printf("n = %d\n", ss.len); */
+    /* for (int i = 0; i < ss.len; i++) */
+    /*     printf("%d %d\n", ss.xs[i], ss.ys[i]); */
 
     clock_t tic = clock();
 
-    Programs ps = sssynthesize(&ss, 2, &barena);
+    Programs ps = sssynthesize(&ss, 3, &barena);
 
     clock_t toc = clock();
     unsigned int dt = (((double)(toc - tic) / CLOCKS_PER_SEC) * 1000000000); /* time in ns */
@@ -473,7 +487,6 @@ int main(int argc, char *argv[]) {
     printf("\nPROGRAMS\n");
     printf("n = %d\n", ps.len);
     printf("dt = %d\n", dt);
-    printf("\n");
     for (int i = 0; i < NSHOW; i++) {
         Expr *e = pslookup(&ps, i);
         char *s = eshow(e);
@@ -507,31 +520,54 @@ int main(int argc, char *argv[]) {
      *             (Num 1))
      *        NULL
      *        3)
-     *
+     * (Mul (Rec (Add Input (Num -1))) Input)
      */
+
     /* printf("\nTEST\n"); */
-    /* Expr input = INPUT_EXPR(); */
-    /* Expr numneg1 = NUM_EXPR(-1); */
-    /* BinOp bopadd0 = ADD_BINOP(&input, &numneg1); */
-    /* Expr add0 = BINOP_EXPR(&bopadd0); */
-    /* Expr rec = REC_EXPR(&add0); */
+    Expr einput = INPUT_EXPR();
+    Expr enumneg1 = NUM_EXPR(-1);
+    BinOp bopdec = ADD_BINOP(&einput, &enumneg1);
+    Expr edec = BINOP_EXPR(&bopdec);
+    Expr erec = REC_EXPR(&edec);
 
-    /* Expr num1 = NUM_EXPR(1); */
+    Expr num1 = NUM_EXPR(1);
 
-    /* BinOp bopadd = ADD_BINOP(&rec, &num1); */
+    BinOp bopadd = ADD_BINOP(&erec, &num1);
 
-    /* Expr add = BINOP_EXPR(&bopadd); */
+    Expr etot = BINOP_EXPR(&bopadd);
 
-    /* printf("%s %d\n", eshow(&add), eeval(&add, NULL, 0, 3)); */
-    /* printf("%s %d\n", eshow(&rec), eeval(&rec, NULL, 0, 3)); */
+    BinOp bopfact = MUL_BINOP(&erec, &einput);
+    Expr efact = BINOP_EXPR(&bopfact);
+
+    Expr enumneg2 = NUM_EXPR(-2);
+    BinOp bopdec2 = ADD_BINOP(&einput, &enumneg2);
+    Expr edec2 = BINOP_EXPR(&bopdec2);
+    Expr erec2 = REC_EXPR(&edec2);
+    BinOp bopfib = ADD_BINOP(&erec, &erec2);
+    Expr efib = BINOP_EXPR(&bopfib);
+
+    /* printf("%s %d\n", eshow(&etot), eeval(&etot, NULL, 0, 3)); */
+    /* printf("%s %d\n", eshow(&erec), eeval(&erec, NULL, 0, 3)); */
+    /* printf("%s %d\n", eshow(&efact), eeval(&efact, NULL, 0, 5)); */
+    /* printf("%s %d\n", eshow(&efact), eeval(&efact, NULL, 0, 6)); */
+    /* printf("%s %d\n", eshow(&efib), eeval(&efib, NULL, 0, 3)); */
+    /* printf("%s %d\n", eshow(&efib), eeval(&efib, NULL, 0, 5)); */
+    /* printf("%s %d\n", eshow(&efib), eeval(&efib, NULL, 0, 6)); */
 
 
+    /* exit(1); */
 
     printf("\n");
     printf("CANDIDATES\n");
     unsigned int candidates = 0;
     for (int i = 0; i < ps.len; i++) {
+        /* if (i % 200000 == 0) */
+        /*     printf("i = %d\n", i); */
+
         Expr *e = pslookup(&ps, i);
+
+        /* if (strcmp(eshow(e), "(Add (Rec (Add Input (Num -1))) (Rec (Add Input (Num -2))))") == 0) */
+        /*     printf("FOUDND FOUND FOUND %s %d %d %d %d %d\n", eshow(e), eeval(e, NULL, 0, ss.xs[0]), eeval(e, NULL, 0, ss.xs[1]), eeval(e, NULL, 0, ss.xs[2]), eeval(e, NULL, 0, ss.xs[3]), eeval(e, NULL, 0, ss.xs[4])); */
 
         bool verify = true;
         for (int i = 0; i < ss.len && verify; i++) {
@@ -545,6 +581,7 @@ int main(int argc, char *argv[]) {
                 printf("%s\n", s);
                 free(s);
             }
+            break;
         }
     }
     if (candidates > NSHOW)
