@@ -18,6 +18,7 @@
 #define NSHOW 6
 
 #define PROGRAM_T Expr
+#define DTYPE float
 
 typedef struct {
   char *buf;
@@ -70,6 +71,16 @@ typedef struct {
     unsigned int len;
     unsigned int cap;
 } Programs;
+
+typedef struct {
+  unsigned int *dims;
+  unsigned int  ndims;
+} Shape;
+
+typedef struct {
+  Shape *shape;
+  float *buf;
+} Matrix;
 
 char *bopshow(BinOp *);
 char *eshow(Expr *);

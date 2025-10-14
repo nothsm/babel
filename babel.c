@@ -17,7 +17,7 @@
 #include <sys/mman.h>
 #include "babel.h"
 
-Arena barena; /* babel arena */
+Arena barena = {0}; /* babel arena */
 
 void ainit(Arena *a) {
     a->buf = calloc(MEMCAP, 1);
@@ -180,6 +180,15 @@ void *aalloc(Arena *a, unsigned int nbytes, unsigned int align) {
 
     ptr = a->buf + a->len;
     a->len += nbytes;
+    return ptr;
+}
+
+/* TODO: Test this */
+void *acalloc(Arena *a, unsigned int nbytes, unsigned int align) {
+    void *ptr = aalloc(a, nbytes, align);
+
+    memset(ptr, 0, nbytes);
+
     return ptr;
 }
 
@@ -440,6 +449,60 @@ Programs sssynthesize(Samples *ss, unsigned int depth, Arena *a) {
     return ps;
 }
 
+/* TODO: Should I dup dims? */
+void shpinit(Shape *shp, unsigned int *dims, unsigned int ndims) {
+    for (int i = 0; i < ndims; i++)
+        assert(dims[i] > 0);
+
+    shp->dims = dims;
+    shp->ndims = ndims;
+}
+
+void matinit(Matrix *mat, Shape *shp, Arena *a) {
+    assert(shp->ndims == 2);
+
+    mat->buf = acalloc(a, sizeof(DTYPE) * (shp->dims[0] * shp->dims[1]), alignof(DTYPE));
+    mat->shape = shp;
+}
+
+/*
+ * x1 x2 x3  => x1    x2    x3    x4    x5    x6
+ * x4 x5 x6  => (0 0) (0 1) (0 2) (1 0) (1 1) (1 2)
+ * (2, 3)       0     1     2     3     4     5
+ *
+ * x1 x2  x1    x2    x3    x4    x5    x6
+ * x3 x4  (0 0) (0 1) (1 0) (1 1) (2 0) (2 1)
+ * x5 x6  0     1     2     3     4     5
+ * (3, 2)
+ */
+float matlookup(Matrix *mat, unsigned int i, unsigned int j) {
+    /* TODO */
+    return mat->buf[(mat->shape->dims[1] * i) + j];
+}
+
+void matset(Matrix *mat, unsigned int i, unsigned int j, float x) {
+    mat->buf[(mat->shape->dims[1] * i) + j] = x;
+}
+
+/* TODO */
+void matmul(Matrix *A, Matrix *B, Matrix *C) {
+    unsigned int N = C->shape->dims[0];
+    unsigned int M = C->shape->dims[1];
+    unsigned int K = A->shape->dims[1];
+
+    assert(A->shape->dims[1] == B->shape->dims[0]);
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < M; j++) {
+            float total = 0;
+            for (int k = 0; k < K; k++)
+                total += matlookup(A, i, k) * matlookup(B, k, j);
+
+            matset(C, i, j, total);
+        }
+    }
+}
+
 /* TODO: add Rec expr (with base case 0) */
 int main(int argc, char *argv[]) {
     bool quiet_mode = false;
@@ -453,6 +516,56 @@ int main(int argc, char *argv[]) {
         prologue();
 
     ainit(&barena);
+
+    Shape *shp = acalloc(&barena, sizeof(Shape), alignof(Shape));
+    unsigned int *dims = acalloc(&barena, sizeof(unsigned int) * 2, alignof(unsigned int));
+    dims[0] = 2;
+    dims[1] = 2;
+    unsigned int ndims = 2;
+    shpinit(shp, dims, ndims);
+
+    Matrix mat = {0};
+    matinit(&mat, shp, &barena);
+
+    float total = 0;
+    for (int i = 0; i < mat.shape->dims[0]; i++) {
+        for (int j = 0; j < mat.shape->dims[1]; j++)
+            matset(&mat, i, j, total++);
+    }
+
+    Matrix mat2 = {0};
+    matinit(&mat2, shp, &barena);
+    for (int i = 0; i < mat2.shape->dims[0]; i++) {
+        for (int j = 0; j < mat2.shape->dims[1]; j++)
+            matset(&mat2, i, j, total--);
+    }
+
+    for (int i = 0; i < mat.shape->dims[0]; i++) {
+        for (int j = 0; j < mat.shape->dims[1]; j++)
+            printf("%f ", matlookup(&mat, i, j));
+        printf("\n");
+    }
+
+    printf("\n");
+    for (int i = 0; i < mat2.shape->dims[0]; i++) {
+        for (int j = 0; j < mat2.shape->dims[1]; j++)
+            printf("%f ", matlookup(&mat2, i, j));
+        printf("\n");
+    }
+
+    Matrix mat3 = {0};
+    matinit(&mat3, shp, &barena);
+
+    matmul(&mat, &mat2, &mat3);
+
+    printf("\n");
+    for (int i = 0; i < mat3.shape->dims[0]; i++) {
+        for (int j = 0; j < mat3.shape->dims[1]; j++)
+            printf("%f ", matlookup(&mat3, i, j));
+        printf("\n");
+    }
+
+    exit(0);
 
     Samples ss = {0};
     ssinit(&ss, &barena);
