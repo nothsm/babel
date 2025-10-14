@@ -13,9 +13,11 @@
 #include <stdlib.h>  /* for free */
 #include <string.h>  /* for strcmp */
 #include <time.h>
-#include <stdalign.h> /* TODO: remove */
 #include <sys/mman.h>
 #include "babel.h"
+
+/* TODO: make sure the alignof's are safe */
+#define alignof(type) ((size_t)&((struct { char c; type d; } *)0)->d) /* TODO: magic from stackoverflow */
 
 Arena barena = {0}; /* babel arena */
 
@@ -418,8 +420,8 @@ void ssdeinit(Samples *ss) {
 
 void ssput(Samples *ss, int x, int y, Arena *a) {
     if (ss->len == ss->cap) {
-        ss->xs = arealloc(a, ss->xs, sizeof(*(ss->xs)) * 2 * ss->cap, alignof(*(ss->xs)));
-        ss->ys = arealloc(a, ss->xs, sizeof(*(ss->ys)) * 2 * ss->cap, alignof(*(ss->ys)));
+        ss->xs = arealloc(a, ss->xs, sizeof(*(ss->xs)) * 2 * ss->cap, alignof(int));
+        ss->ys = arealloc(a, ss->xs, sizeof(*(ss->ys)) * 2 * ss->cap, alignof(int));
         ss->cap = 2 * ss->cap;
     }
     ss->xs[ss->len] = x;
@@ -492,10 +494,10 @@ void matmul(Matrix *A, Matrix *B, Matrix *C) {
 
     assert(A->shape->dims[1] == B->shape->dims[0]);
 
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < M; j++) {
+    for (unsigned int i = 0; i < N; i++) {
+        for (unsigned int j = 0; j < M; j++) {
             float total = 0;
-            for (int k = 0; k < K; k++)
+            for (unsigned int k = 0; k < K; k++)
                 total += matlookup(A, i, k) * matlookup(B, k, j);
 
             matset(C, i, j, total);
@@ -517,55 +519,65 @@ int main(int argc, char *argv[]) {
 
     ainit(&barena);
 
+    unsigned int N = 1000;
+
     Shape *shp = acalloc(&barena, sizeof(Shape), alignof(Shape));
     unsigned int *dims = acalloc(&barena, sizeof(unsigned int) * 2, alignof(unsigned int));
-    dims[0] = 2;
-    dims[1] = 2;
+    dims[0] = N;
+    dims[1] = N;
     unsigned int ndims = 2;
     shpinit(shp, dims, ndims);
 
-    Matrix mat = {0};
-    matinit(&mat, shp, &barena);
+    Matrix A = {0};
+    matinit(&A, shp, &barena);
 
     float total = 0;
-    for (int i = 0; i < mat.shape->dims[0]; i++) {
-        for (int j = 0; j < mat.shape->dims[1]; j++)
-            matset(&mat, i, j, total++);
+    for (int i = 0; i < A.shape->dims[0]; i++) {
+        for (int j = 0; j < A.shape->dims[1]; j++)
+            matset(&A, i, j, total++);
     }
 
-    Matrix mat2 = {0};
-    matinit(&mat2, shp, &barena);
-    for (int i = 0; i < mat2.shape->dims[0]; i++) {
-        for (int j = 0; j < mat2.shape->dims[1]; j++)
-            matset(&mat2, i, j, total--);
+    Matrix B = {0};
+    matinit(&B, shp, &barena);
+    for (int i = 0; i < B.shape->dims[0]; i++) {
+        for (int j = 0; j < B.shape->dims[1]; j++)
+            matset(&B, i, j, total--);
     }
 
-    for (int i = 0; i < mat.shape->dims[0]; i++) {
-        for (int j = 0; j < mat.shape->dims[1]; j++)
-            printf("%f ", matlookup(&mat, i, j));
-        printf("\n");
-    }
+    /* for (int i = 0; i < A.shape->dims[0]; i++) { */
+    /*     for (int j = 0; j < A.shape->dims[1]; j++) */
+    /*         printf("%f ", matlookup(&A, i, j)); */
+    /*     printf("\n"); */
+    /* } */
 
-    printf("\n");
-    for (int i = 0; i < mat2.shape->dims[0]; i++) {
-        for (int j = 0; j < mat2.shape->dims[1]; j++)
-            printf("%f ", matlookup(&mat2, i, j));
-        printf("\n");
-    }
+    /* printf("\n"); */
+    /* for (int i = 0; i < B.shape->dims[0]; i++) { */
+    /*     for (int j = 0; j < B.shape->dims[1]; j++) */
+    /*         printf("%f ", matlookup(&B, i, j)); */
+    /*     printf("\n"); */
+    /* } */
 
-    Matrix mat3 = {0};
-    matinit(&mat3, shp, &barena);
+    Matrix C = {0};
+    matinit(&C, shp, &barena);
 
-    matmul(&mat, &mat2, &mat3);
 
-    printf("\n");
-    for (int i = 0; i < mat3.shape->dims[0]; i++) {
-        for (int j = 0; j < mat3.shape->dims[1]; j++)
-            printf("%f ", matlookup(&mat3, i, j));
-        printf("\n");
-    }
+    clock_t t0 = clock();
 
-    exit(0);
+    /* matmul(&A, &B, &C); */
+
+    clock_t t1 = clock();
+    unsigned long dtmatmul = (((double)(t1 - t0) / CLOCKS_PER_SEC) * 1000000000); /* time in ns */
+
+    /* printf("dt(matmul) = %ld\n", dtmatmul); */
+
+    /* printf("\n"); */
+    /* for (int i = 0; i < C.shape->dims[0]; i++) { */
+    /*     for (int j = 0; j < C.shape->dims[1]; j++) */
+    /*         printf("%f ", matlookup(&C, i, j)); */
+    /*     printf("\n"); */
+    /* } */
+
+    /* exit(0); */
 
     Samples ss = {0};
     ssinit(&ss, &barena);
@@ -600,7 +612,10 @@ int main(int argc, char *argv[]) {
     printf("\nPROGRAMS\n");
     printf("n = %d\n", ps.len);
     printf("dt = %d\n", dt);
-    for (int i = 0; i < NSHOW; i++) {
+
+    assert(NSHOW <= ps.len);
+
+    for (unsigned int i = 0; i < NSHOW; i++) {
         Expr *e = pslookup(&ps, i);
         char *s = eshow(e);
         printf("%s %d %d %d\n", s, eeval(e, NULL, 0, ss.xs[0]), eeval(e, NULL, 0, ss.xs[1]), eeval(e, NULL, 0, ss.xs[2]));
@@ -621,7 +636,7 @@ int main(int argc, char *argv[]) {
 
     if (ps.len > NSHOW)
         printf("...\n");
-    for (int i = ps.len - NSHOW; i < ps.len; i++) {
+    for (unsigned int i = ps.len - NSHOW; i < ps.len; i++) {
         Expr *e = pslookup(&ps, i);
         char *s = eshow(e);
         printf("%s %d %d %d\n", s, eeval(e, NULL, 0, ss.xs[0]), eeval(e, NULL, 0, ss.xs[1]), eeval(e, NULL, 0, ss.xs[2]));
