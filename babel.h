@@ -15,7 +15,9 @@
 #define ARRCAP 1024 /* TODO: decrease this */
 #define RECLIM 32
 #define MAXPROGRAMS (32 * 1024 * 1024) /* 8MB limit... TODO: decrease this */
-#define NSHOW 6
+#define NGROW 10
+#define NSHOW 100
+#define SEED 546
 
 #define PROGRAM_T Expr
 #define DTYPE float

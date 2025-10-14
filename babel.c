@@ -13,7 +13,6 @@
 #include <stdlib.h>  /* for free */
 #include <string.h>  /* for strcmp */
 #include <time.h>
-#include <sys/mman.h>
 #include "babel.h"
 
 /* TODO: make sure the alignof's are safe */
@@ -374,6 +373,44 @@ Expr *pslookup(Programs *ps, unsigned int i) {
     return ps->buf + i;
 }
 
+void psrandgrow(Programs *ps, unsigned int n, Arena *a) {
+    /* TODO: initialize rand with srand */
+
+    unsigned int count = 0;
+    while (count++ < n) {
+        unsigned int v = rand() % 3; /* TODO: use my own prng */
+
+        if (v == 0) {
+            unsigned int i = rand() % ps->len;
+            Expr *e = pslookup(ps, i);
+            psput(ps, REC_EXPR(e));
+        } else if (v == 1) {
+            unsigned int i = rand() % ps->len;
+            unsigned int j = rand() % ps->len;
+
+            Expr *e1 = pslookup(ps, i);
+            Expr *e2 = pslookup(ps, j);
+
+            BinOp *add = aalloc(a, sizeof(BinOp), alignof(BinOp));
+            *add = ADD_BINOP(e1, e2);
+            psput(ps, BINOP_EXPR(add));
+        } else if (v == 2) {
+            unsigned int i = rand() % ps->len;
+            unsigned int j = rand() % ps->len;
+
+            Expr *e1 = pslookup(ps, i);
+            Expr *e2 = pslookup(ps, j);
+
+            BinOp *mul = aalloc(a, sizeof(BinOp), alignof(BinOp));
+            *mul = MUL_BINOP(e1, e2);
+            psput(ps, BINOP_EXPR(mul));
+        }
+        else
+            assert(false);
+    }
+
+}
+
 void psgrow(Programs *ps, Arena *a) {
     unsigned int len = ps->len;
 
@@ -383,6 +420,7 @@ void psgrow(Programs *ps, Arena *a) {
         psput(ps, REC_EXPR(e));
     }
 
+    /* TODO: do these all in a data-directed, declarative way */
     for (int i = 0; i < len; i++) {
         for (int j = 0; j < len; j++) {
             /* TODO: it's not safe to point to yourself because of reallocs */
@@ -445,7 +483,8 @@ Programs sssynthesize(Samples *ss, unsigned int depth, Arena *a) {
     psput(&ps, NUM_EXPR(1));
 
     for (int i = 0; i < depth; i++) {
-        psgrow(&ps, a);
+        /* psgrow(&ps, a); */
+        psrandgrow(&ps, NGROW, a);
     }
 
     return ps;
@@ -507,6 +546,9 @@ void matmul(Matrix *A, Matrix *B, Matrix *C) {
 
 /* TODO: add Rec expr (with base case 0) */
 int main(int argc, char *argv[]) {
+    /* srand(SEED); */
+    srand(time(NULL));
+
     bool quiet_mode = false;
     bool filter_mode = false;
     for (int i = 0; i < argc; i++) {
@@ -604,7 +646,7 @@ int main(int argc, char *argv[]) {
 
     clock_t tic = clock();
 
-    Programs ps = sssynthesize(&ss, 3, &barena);
+    Programs ps = sssynthesize(&ss, 1, &barena);
 
     clock_t toc = clock();
     unsigned int dt = (((double)(toc - tic) / CLOCKS_PER_SEC) * 1000000000); /* time in ns */
@@ -613,9 +655,11 @@ int main(int argc, char *argv[]) {
     printf("n = %d\n", ps.len);
     printf("dt = %d\n", dt);
 
-    assert(NSHOW <= ps.len);
+    unsigned int nshow = NSHOW <= ps.len ? NSHOW : ps.len;
+    assert(nshow <= ps.len);
 
-    for (unsigned int i = 0; i < NSHOW; i++) {
+
+    for (unsigned int i = 0; i < nshow; i++) {
         Expr *e = pslookup(&ps, i);
         char *s = eshow(e);
         printf("%s %d %d %d\n", s, eeval(e, NULL, 0, ss.xs[0]), eeval(e, NULL, 0, ss.xs[1]), eeval(e, NULL, 0, ss.xs[2]));
@@ -634,14 +678,14 @@ int main(int argc, char *argv[]) {
     /*     free(s); */
     /* } */
 
-    if (ps.len > NSHOW)
+    if (ps.len > nshow)
         printf("...\n");
-    for (unsigned int i = ps.len - NSHOW; i < ps.len; i++) {
-        Expr *e = pslookup(&ps, i);
-        char *s = eshow(e);
-        printf("%s %d %d %d\n", s, eeval(e, NULL, 0, ss.xs[0]), eeval(e, NULL, 0, ss.xs[1]), eeval(e, NULL, 0, ss.xs[2]));
-        free(s);
-    }
+    /* for (unsigned int i = ps.len - nshow; i < ps.len; i++) { */
+    /*     Expr *e = pslookup(&ps, i); */
+    /*     char *s = eshow(e); */
+    /*     printf("%s %d %d %d\n", s, eeval(e, NULL, 0, ss.xs[0]), eeval(e, NULL, 0, ss.xs[1]), eeval(e, NULL, 0, ss.xs[2])); */
+    /*     free(s); */
+    /* } */
 
     /*
      * (eeval (Add (Rec (Add Input (Num -1)))
