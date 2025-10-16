@@ -27,140 +27,6 @@ void ainit(Arena *a) {
     a->cap = MEMCAP;
 }
 
-/*
- * - Rec needs parent?
- *
- * Let Input = 3.
- *
- * (Add (Rec Input) 1)
- * (Add (Add (Rec Input) 1))
- * (Add (Add (Add (Rec Input) 1) 1) 1)
- * (Add (Add (Add 0 1) 1) 1)
- *
- * (Add (Rec Input) 1)
- * 1 + (Add (Rec (Input - 1)) 1)
- *
- * Let x = (Add (Rec (Add Input (Num -1))) (Num 1))
- *
- * 1) with context
- * (eeval (Add (Rec (Add Input (Num -1)))
- *             (Num 1))
- *        NULL
- *        3)
- * { eval Add args}
- * = (+ (eeval (Rec (Add Input (Num -1))) x 3)
- *      (eeval (Num 1) x 3))
- * { eval Rec }
- * = (+ (eeval x
- *             NULL
- *             (eeval (Add Input (Num -1)) x 3))
- *      (eeval (Num 1) x 3))
- * { eval Add, Input, Num }
- * = (+ (eeval x NULL 2)
- *      (eeval (Num 1) x 3))
- * { substitute x }
- * = (+  (eeval (Add (Rec (Add Input (Num -1)))
- *                   (Num 1))
- *              NULL
- *              2)
- *       (eeval (Num 1) x 3))
- * { eval Add args }
- * = (+  (+ (eeval (Rec (Add Input (Num -1))) x 2)
- *          (eeval (Num 1) x 2))
- *       (eeval (Num 1) x 3))
- * { eval Rec }
- * = (+  (+ (eeval x
- *                 NULL
- *                 (eeval (Add Input (Num -1)) x 2))
- *          (eeval (Num 1) x 2))
- *       (eeval (Num 1) x 3))
- * { eval Add, Input, Num }
- * = (+  (+ (eeval x NULL 1)
- *          (eeval (Num 1) x 2))
- *       (eeval (Num 1) x 3))
- * { substitute x }
- * = (+  (+ (eeval (Add (Rec (Add Input (Num -1)))
- *                 (Num 1))
- *                 NULL
- *                 1)
- *          (eeval (Num 1) x 2))
- *       (eeval (Num 1) x 3))
- * { eval Add args }
- * = (+ (+ (+ (eeval (Rec (Add Input (Num -1))) x 1)
- *            (eeval (Num 1) x 1))
- *         (eeval (Num 1) x 2))
- *      (eeval (Num 1) x 3))
- * { eval Rec }
- * = (+ (+ (+ (eeval x
- *                   NULL
- *                   (eeval (Add Input (Num -1)) x 1))
- *            (eeval (Num 1) x 1))
- *         (eeval (Num 1) x 2))
- *      (eeval (Num 1) x 3))
- * { eval Add, Input, Num }
- * = (+ (+ (+ (eeval x NULL 0)
- *            (eeval (Num 1) x 1))
- *         (eeval (Num 1) x 2))
- *      (eeval (Num 1) x 3))
- * { substitute x }
- * = (+ (+ (+ (eeval (Add (Rec (Add Input (Num -1)))
- *                        (Num 1))
- *                   NULL
- *                   0)
- *            (eeval (Num 1) x 1))
- *         (eeval (Num 1) x 2))
- *      (eeval (Num 1) x 3))
- * { eval Add args }
- * = (+ (+ (+ (+ (eeval (Rec (Add Input (Num -1))) x 0)
- *               (eeval (Num 1) x 0))
- *            (eeval (Num 1) x 1))
- *         (eeval (Num 1) x 2))
- *      (eeval (Num 1) x 3))
- * { eval Rec }
- * = (+ (+ (+ (+ 0
- *               (eeval (Num 1) x 0))
- *            (eeval (Num 1) x 1))
- *         (eeval (Num 1) x 2))
- *      (eeval (Num 1) x 3))
- * { eval Add, Num }
- * = 4
- *
- * 2) without context
- * (eeval (Rec (Add Input (Num -1))) NULL 1)
- * = (eeval (Rec (Add Input (Num -1))) NULL (eeval (Add Input (Num -1)) x 1))
- * = (eeval (Rec (Add Input (Num -1))) NULL 0)
- * = 0
- *
- * (eeval (Add (Rec (Add Input (Num -1)) x) 1) 0)
- *
- * (eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) 3)
- * = (eeval (Rec (Add Input (Num -1)) x) 3) + (eeval (Num 1) 3)                                                                                              [eval0 Add]
- * = (eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) (eeval (Add Input (Num -1)) 3)) + (eeval (Num 1) 3)                                                   [eval Rec]
- * = (eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) ((eeval Input 3) + (eeval (Num -1)))) + (eeval (Num 1) 3)                                             [eval0 Add']
- * = (eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) (3 + (eeval (Num -1)))) + (eeval (Num 1) 3)                                                           [eval Input]
- * = (eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) (3 + -1)) + (eeval (Num 1) 3)                                                                         [eval Num]
- * = (eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) 2) + (eeval (Num 1) 3)                                                                                [eval1 Add']
- * = ((eeval (Rec (Add Input (Num -1)) x) 2) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                                        [eval0 Add'']
- * = ((eeval (Add (Rec (Add Input (Num -1)) x) (Num 1))  (eeval (Add Input (Num -1)) 2)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                            [eval Rec]
- * = ((eeval (Add (Rec (Add Input (Num -1)) x) (Num 1))  ((eeval Input 2) + (eeval (Num -1) 2))) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                    [eval0 Add''']
- * = ((eeval (Add (Rec (Add Input (Num -1)) x) (Num 1))  (2 + (eeval (Num -1) 2))) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                  [eval Input]
- * = ((eeval (Add (Rec (Add Input (Num -1)) x) (Num 1))  (2 + -1)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                  [eval Num]
- * = ((eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) 1) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                          [eval1 Add''']
- * = (((eeval (Rec (Add Input (Num -1)) x) 1) + (eeval (Num 1) 1)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                  [eval0 Add'''']
- * = (((eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) (eeval (Add Input (Num -1)) 1)) + (eeval (Num 1) 1)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)       [eval Rec]
- * = (((eeval (Add (Rec (Add Input (Num -1)) x) (Num 1)) 0) + (eeval (Num 1) 1)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                    [eval Add''''']
- * = ((((eeval (Rec (Add Input (Num -1)) x) 0) + (eeval (Num 1) 0)) + (eeval (Num 1) 1)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                            [eval0 Add'''''']
- * = (((0 + (eeval (Num 1) 0)) + (eeval (Num 1) 1)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                                 [eval Rec]
- * = (((0 + 1) + (eeval (Num 1) 1)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                                                 [eval Num]
- * = ((1 + (eeval (Num 1) 1)) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                                                       [eval1 Add'''''']
- * = ((1 + 1) + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                                                                       [eval Num]
- * = (2 + (eeval (Num 1) 2)) + (eeval (Num 1) 3)                                                                                                             [eval1 Add'''']
- * = (2 + 1) + (eeval (Num 1) 3)                                                                                                                             [eval Num]
- * = 3 + (eeval (Num 1) 3)                                                                                                                                   [eval1 Add'']
- * = 3 + 1                                                                                                                                                   [eval Num]
- * = 4                                                                                                                                                       [eval1 Add]
- */
-
 void adeinit(Arena *a) {
     free(a->buf);
     a->buf = NULL;
@@ -468,8 +334,6 @@ void pselim(Programs *ps, Samples *ss) {
 }
 
 void ssinit(Samples *ss, Allocator *a) {
-    /* ss->xs = aalloc(a, ARRCAP * sizeof(int), alignof(int)); */
-    /* ss->ys = aalloc(a, ARRCAP * sizeof(int), alignof(int)); */
     ss->xs = a->malloc(ARRCAP * sizeof(int), a->ctx);
     ss->ys = a->malloc(ARRCAP * sizeof(int), a->ctx);
     ss->cap = ARRCAP;
@@ -485,8 +349,6 @@ void ssdeinit(Samples *ss) {
 
 void ssput(Samples *ss, int x, int y, Allocator *a) {
     if (ss->len == ss->cap) {
-        /* ss->xs = arealloc(a, ss->xs, sizeof(*(ss->xs)) * 2 * ss->cap, alignof(int)); */
-        /* ss->ys = arealloc(a, ss->xs, sizeof(*(ss->ys)) * 2 * ss->cap, alignof(int)); */
         ss->xs = a->realloc(ss->xs, sizeof(*(ss->xs)) * 2 * ss->cap, a->ctx);
         ss->ys = a->realloc(ss->ys, sizeof(*(ss->ys)) * 2 * ss->cap, a->ctx);
         ss->cap = 2 * ss->cap;
@@ -503,18 +365,13 @@ Programs sssynthesize(Samples *ss, unsigned int depth, Allocator *a) {
 
     /* Add terminals to program list */
     psput(&ps, INPUT_EXPR());
-    /* for (int i = -10; i <= 10; i++) */
 
     for (int i = -10; i <= 10; i++)
         psput(&ps, NUM_EXPR(i));
-    /* psput(&ps, NUM_EXPR(-2)); */
-    /* psput(&ps, NUM_EXPR(-1)); */
-    /* psput(&ps, NUM_EXPR(1)); */
 
-    for (int i = 0; i < depth; i++) {
+    for (int i = 0; i < depth; i++)
         /* psgrow(&ps, a); */
         psrandgrow(&ps, NGROW, a);
-    }
 
     return ps;
 }
@@ -536,16 +393,6 @@ void matinit(Matrix *mat, Shape *shp, Allocator *a) {
     mat->shape = shp;
 }
 
-/*
- * x1 x2 x3  => x1    x2    x3    x4    x5    x6
- * x4 x5 x6  => (0 0) (0 1) (0 2) (1 0) (1 1) (1 2)
- * (2, 3)       0     1     2     3     4     5
- *
- * x1 x2  x1    x2    x3    x4    x5    x6
- * x3 x4  (0 0) (0 1) (1 0) (1 1) (2 0) (2 1)
- * x5 x6  0     1     2     3     4     5
- * (3, 2)
- */
 float matlookup(Matrix *mat, unsigned int i, unsigned int j) {
     /* TODO */
     return mat->buf[(mat->shape->dims[1] * i) + j];
@@ -766,13 +613,7 @@ int main(int argc, char *argv[]) {
     printf("CANDIDATES\n");
     unsigned int candidates = 0;
     for (int i = 0; i < ps.len; i++) {
-        /* if (i % 200000 == 0) */
-        /*     printf("i = %d\n", i); */
-
         Expr *e = pslookup(&ps, i);
-
-        /* if (strcmp(eshow(e), "(Add (Rec (Add Input (Num -1))) (Rec (Add Input (Num -2))))") == 0) */
-        /*     printf("FOUDND FOUND FOUND %s %d %d %d %d %d\n", eshow(e), eeval(e, NULL, 0, ss.xs[0]), eeval(e, NULL, 0, ss.xs[1]), eeval(e, NULL, 0, ss.xs[2]), eeval(e, NULL, 0, ss.xs[3]), eeval(e, NULL, 0, ss.xs[4])); */
 
         bool verify = true;
         for (int i = 0; i < ss.len && verify; i++) {
@@ -815,6 +656,7 @@ int main(int argc, char *argv[]) {
  *   - cryptography (extra)
  *
  * - allow users to specify rewrite rules
+ * - add C rewrite rules
  *
  * - 3 interfaces:
  *   - c library
