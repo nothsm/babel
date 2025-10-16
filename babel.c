@@ -211,6 +211,24 @@ void *arealloc(Arena *a, void *oldptr, unsigned int nbytes, unsigned int align) 
     return newptr;
 }
 
+/* TODO: fix alignment here */
+void *arenamalloc(unsigned int nbytes, void *ctx) {
+    Arena *a = ctx;
+    return aalloc(a, nbytes, 1);
+}
+
+void arenafree(void *ptr, void *ctx) {
+    /* Do nothing */
+}
+
+/* TODO: Fix alignment */
+void *arenarealloc(void *ptr, unsigned int nbytes, void *ctx) {
+    Arena *a = ctx;
+    return arealloc(a, ptr, nbytes, 1);
+}
+
+static Allocator babel_allocator = {arenamalloc, arenafree, arenarealloc, &barena};
+
 unsigned int mygetline(char *line, unsigned int lim) {
     int c;
     unsigned int i = 0;
@@ -344,9 +362,11 @@ int eeval(Expr *e, Expr *context, unsigned int depth, int input) {
 
 /* TODO: This allocates */
 /* TODO: Should I split an allocation function separately? */
-void psinit(Programs *ps, Arena *a) {
+void psinit(Programs *ps, Allocator *a) {
     /* ps->buf = calloc(MAXPROGRAMS, sizeof(PROGRAM_T)); */
-    ps->buf = aalloc(a, MAXPROGRAMS * sizeof(PROGRAM_T), alignof(PROGRAM_T));
+    /* ps->buf = aalloc(a, MAXPROGRAMS * sizeof(PROGRAM_T), alignof(PROGRAM_T)); */
+    ps->buf = a->malloc(MAXPROGRAMS * sizeof(PROGRAM_T), a->ctx);
+    /* ps->buf = a->malloc(MAXPROGRAMS * sizeof(PROGRAM_T), a->context); */
     ps->cap = MAXPROGRAMS;
     ps->len = 0;
 }
@@ -373,7 +393,7 @@ Expr *pslookup(Programs *ps, unsigned int i) {
     return ps->buf + i;
 }
 
-void psrandgrow(Programs *ps, unsigned int n, Arena *a) {
+void psrandgrow(Programs *ps, unsigned int n, Allocator *a) {
     /* TODO: initialize rand with srand */
 
     unsigned int count = 0;
@@ -391,7 +411,8 @@ void psrandgrow(Programs *ps, unsigned int n, Arena *a) {
             Expr *e1 = pslookup(ps, i);
             Expr *e2 = pslookup(ps, j);
 
-            BinOp *add = aalloc(a, sizeof(BinOp), alignof(BinOp));
+            /* BinOp *add = aalloc(a, sizeof(BinOp), alignof(BinOp)); */
+            BinOp *add = a->malloc(sizeof(BinOp), a->ctx);
             *add = ADD_BINOP(e1, e2);
             psput(ps, BINOP_EXPR(add));
         } else if (v == 2) {
@@ -401,7 +422,8 @@ void psrandgrow(Programs *ps, unsigned int n, Arena *a) {
             Expr *e1 = pslookup(ps, i);
             Expr *e2 = pslookup(ps, j);
 
-            BinOp *mul = aalloc(a, sizeof(BinOp), alignof(BinOp));
+            /* BinOp *mul = aalloc(a, sizeof(BinOp), alignof(BinOp)); */
+            BinOp *mul = a->malloc(sizeof(BinOp), a->ctx);
             *mul = MUL_BINOP(e1, e2);
             psput(ps, BINOP_EXPR(mul));
         }
@@ -411,7 +433,8 @@ void psrandgrow(Programs *ps, unsigned int n, Arena *a) {
 
 }
 
-void psgrow(Programs *ps, Arena *a) {
+/* TODO: test changes using Allocator */
+void psgrow(Programs *ps, Allocator *a) {
     unsigned int len = ps->len;
 
     /* TODO: add this back */
@@ -427,11 +450,13 @@ void psgrow(Programs *ps, Arena *a) {
             Expr *e1 = pslookup(ps, i);
             Expr *e2 = pslookup(ps, j);
 
-            BinOp *add = aalloc(a, sizeof(BinOp), alignof(BinOp));
+            /* BinOp *add = aalloc(a, sizeof(BinOp), alignof(BinOp)); */
+            BinOp *add = a->malloc(sizeof(BinOp), a->ctx);
             *add = ADD_BINOP(e1, e2); /* TODO: this is slow */
             psput(ps, BINOP_EXPR(add));
 
-            BinOp *mul = aalloc(a, sizeof(BinOp), alignof(BinOp));
+            /* BinOp *mul = aalloc(a, sizeof(BinOp), alignof(BinOp)); */
+            BinOp *mul = a->malloc(sizeof(BinOp), a->ctx);
             *mul = MUL_BINOP(e1, e2);
             psput(ps, BINOP_EXPR(mul));
         }
@@ -442,9 +467,11 @@ void pselim(Programs *ps, Samples *ss) {
     /* TODO */
 }
 
-void ssinit(Samples *ss, Arena *a) {
-    ss->xs = aalloc(a, ARRCAP * sizeof(int), alignof(int));
-    ss->ys = aalloc(a, ARRCAP * sizeof(int), alignof(int));
+void ssinit(Samples *ss, Allocator *a) {
+    /* ss->xs = aalloc(a, ARRCAP * sizeof(int), alignof(int)); */
+    /* ss->ys = aalloc(a, ARRCAP * sizeof(int), alignof(int)); */
+    ss->xs = a->malloc(ARRCAP * sizeof(int), a->ctx);
+    ss->ys = a->malloc(ARRCAP * sizeof(int), a->ctx);
     ss->cap = ARRCAP;
     ss->len = 0;
 }
@@ -456,10 +483,12 @@ void ssdeinit(Samples *ss) {
     ss->len = 0;
 }
 
-void ssput(Samples *ss, int x, int y, Arena *a) {
+void ssput(Samples *ss, int x, int y, Allocator *a) {
     if (ss->len == ss->cap) {
-        ss->xs = arealloc(a, ss->xs, sizeof(*(ss->xs)) * 2 * ss->cap, alignof(int));
-        ss->ys = arealloc(a, ss->xs, sizeof(*(ss->ys)) * 2 * ss->cap, alignof(int));
+        /* ss->xs = arealloc(a, ss->xs, sizeof(*(ss->xs)) * 2 * ss->cap, alignof(int)); */
+        /* ss->ys = arealloc(a, ss->xs, sizeof(*(ss->ys)) * 2 * ss->cap, alignof(int)); */
+        ss->xs = a->realloc(ss->xs, sizeof(*(ss->xs)) * 2 * ss->cap, a->ctx);
+        ss->ys = a->realloc(ss->ys, sizeof(*(ss->ys)) * 2 * ss->cap, a->ctx);
         ss->cap = 2 * ss->cap;
     }
     ss->xs[ss->len] = x;
@@ -467,20 +496,20 @@ void ssput(Samples *ss, int x, int y, Arena *a) {
     ss->len += 1;
 }
 
-Programs sssynthesize(Samples *ss, unsigned int depth, Arena *a) {
+Programs sssynthesize(Samples *ss, unsigned int depth, Allocator *a) {
     Programs ps = {0};
 
-    psinit(&ps, a);
+    psinit(&ps, &babel_allocator);
 
     /* Add terminals to program list */
     psput(&ps, INPUT_EXPR());
     /* for (int i = -10; i <= 10; i++) */
 
-    /* for (int i = -1; i <= 1; i++) */
-    /*     psput(&ps, NUM_EXPR(i)); */
-    psput(&ps, NUM_EXPR(-2));
-    psput(&ps, NUM_EXPR(-1));
-    psput(&ps, NUM_EXPR(1));
+    for (int i = -10; i <= 10; i++)
+        psput(&ps, NUM_EXPR(i));
+    /* psput(&ps, NUM_EXPR(-2)); */
+    /* psput(&ps, NUM_EXPR(-1)); */
+    /* psput(&ps, NUM_EXPR(1)); */
 
     for (int i = 0; i < depth; i++) {
         /* psgrow(&ps, a); */
@@ -499,10 +528,11 @@ void shpinit(Shape *shp, unsigned int *dims, unsigned int ndims) {
     shp->ndims = ndims;
 }
 
-void matinit(Matrix *mat, Shape *shp, Arena *a) {
+void matinit(Matrix *mat, Shape *shp, Allocator *a) {
     assert(shp->ndims == 2);
 
-    mat->buf = acalloc(a, sizeof(DTYPE) * (shp->dims[0] * shp->dims[1]), alignof(DTYPE));
+    /* mat->buf = acalloc(a, sizeof(DTYPE) * (shp->dims[0] * shp->dims[1]), alignof(DTYPE)); */
+    mat->buf = a->malloc(sizeof(DTYPE) * (shp->dims[0] * shp->dims[1]), a->ctx);
     mat->shape = shp;
 }
 
@@ -563,15 +593,18 @@ int main(int argc, char *argv[]) {
 
     unsigned int N = 1000;
 
-    Shape *shp = acalloc(&barena, sizeof(Shape), alignof(Shape));
-    unsigned int *dims = acalloc(&barena, sizeof(unsigned int) * 2, alignof(unsigned int));
+    /* TODO: add calloc to Allocator */
+    /* Shape *shp = acalloc(&barena, sizeof(Shape), alignof(Shape)); */
+    Shape *shp = babel_allocator.malloc(sizeof(Shape), babel_allocator.ctx);
+    /* unsigned int *dims = acalloc(&barena, sizeof(unsigned int) * 2, alignof(unsigned int)); */
+    unsigned int *dims = babel_allocator.malloc(sizeof(unsigned int) * 2, babel_allocator.ctx);
     dims[0] = N;
     dims[1] = N;
     unsigned int ndims = 2;
     shpinit(shp, dims, ndims);
 
     Matrix A = {0};
-    matinit(&A, shp, &barena);
+    matinit(&A, shp, &babel_allocator);
 
     float total = 0;
     for (int i = 0; i < A.shape->dims[0]; i++) {
@@ -580,7 +613,7 @@ int main(int argc, char *argv[]) {
     }
 
     Matrix B = {0};
-    matinit(&B, shp, &barena);
+    matinit(&B, shp, &babel_allocator);
     for (int i = 0; i < B.shape->dims[0]; i++) {
         for (int j = 0; j < B.shape->dims[1]; j++)
             matset(&B, i, j, total--);
@@ -600,7 +633,7 @@ int main(int argc, char *argv[]) {
     /* } */
 
     Matrix C = {0};
-    matinit(&C, shp, &barena);
+    matinit(&C, shp, &babel_allocator);
 
 
     clock_t t0 = clock();
@@ -622,7 +655,7 @@ int main(int argc, char *argv[]) {
     /* exit(0); */
 
     Samples ss = {0};
-    ssinit(&ss, &barena);
+    ssinit(&ss, &babel_allocator);
     if (filter_mode) {
         char line[BUFSIZE] = {0};
 
@@ -634,7 +667,7 @@ int main(int argc, char *argv[]) {
             char *s = line;
             x = atoi((tok = strsep(&s, " ")));
             y = atoi((tok = strsep(&s, " ")));
-            ssput(&ss, x, y, &barena);
+            ssput(&ss, x, y, &babel_allocator);
         }
     } else
         interact();
@@ -646,7 +679,7 @@ int main(int argc, char *argv[]) {
 
     clock_t tic = clock();
 
-    Programs ps = sssynthesize(&ss, 1, &barena);
+    Programs ps = sssynthesize(&ss, 1, &babel_allocator);
 
     clock_t toc = clock();
     unsigned int dt = (((double)(toc - tic) / CLOCKS_PER_SEC) * 1000000000); /* time in ns */

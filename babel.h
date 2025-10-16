@@ -15,7 +15,7 @@
 #define ARRCAP 1024 /* TODO: decrease this */
 #define RECLIM 32
 #define MAXPROGRAMS (32 * 1024 * 1024) /* 8MB limit... TODO: decrease this */
-#define NGROW 10
+#define NGROW 32
 #define NSHOW 100
 #define SEED 546
 
@@ -27,6 +27,13 @@ typedef struct {
   unsigned int len;
   unsigned int cap;
 } Arena;
+
+typedef struct {
+  void *(*malloc)(unsigned int, void *ctx);
+  void  (*free)(void *, void *ctx);
+  void *(*realloc)(void *, unsigned int, void *ctx);
+  void   *ctx;
+} Allocator;
 
 typedef struct {
   int *xs;
