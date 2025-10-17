@@ -87,13 +87,14 @@ typedef struct {
     unsigned int cap;
 } Programs;
 
-typedef struct {
-  unsigned int *dims;
-  unsigned int  ndims;
-} Shape;
+/* typedef struct { */
+/*   unsigned int *dims; */
+/*   unsigned int  ndims; */
+/* } Shape; */
 
 typedef struct {
-  Shape *shape;
+  unsigned int *shape;
+  unsigned int ndims;
   float *buf;
 } Matrix;
 

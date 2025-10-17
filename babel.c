@@ -377,38 +377,39 @@ Programs sssynthesize(Samples *ss, unsigned int depth, Allocator *a) {
 }
 
 /* TODO: Should I dup dims? */
-void shpinit(Shape *shp, unsigned int *dims, unsigned int ndims) {
-    for (int i = 0; i < ndims; i++)
-        assert(dims[i] > 0);
+/* void shpinit(Shape *shp, unsigned int *dims, unsigned int ndims) { */
+/*     for (int i = 0; i < ndims; i++) */
+/*         assert(dims[i] > 0); */
 
-    shp->dims = dims;
-    shp->ndims = ndims;
-}
+/*     shp->dims = dims; */
+/*     shp->ndims = ndims; */
+/* } */
 
-void matinit(Matrix *mat, Shape *shp, Allocator *a) {
-    assert(shp->ndims == 2);
+void matinit(Matrix *mat, unsigned int *shape, unsigned int ndims, Allocator *a) {
+    assert(ndims == 2);
 
     /* mat->buf = acalloc(a, sizeof(DTYPE) * (shp->dims[0] * shp->dims[1]), alignof(DTYPE)); */
-    mat->buf = a->malloc(sizeof(DTYPE) * (shp->dims[0] * shp->dims[1]), a->ctx);
-    mat->shape = shp;
+    mat->buf = a->malloc(sizeof(DTYPE) * (shape[0] * shape[1]), a->ctx);
+    mat->shape = shape;
+    mat->ndims = ndims;
 }
 
 float matlookup(Matrix *mat, unsigned int i, unsigned int j) {
     /* TODO */
-    return mat->buf[(mat->shape->dims[1] * i) + j];
+    return mat->buf[(mat->shape[1] * i) + j];
 }
 
 void matset(Matrix *mat, unsigned int i, unsigned int j, float x) {
-    mat->buf[(mat->shape->dims[1] * i) + j] = x;
+    mat->buf[(mat->shape[1] * i) + j] = x;
 }
 
 /* TODO */
 void matmul(Matrix *A, Matrix *B, Matrix *C) {
-    unsigned int N = C->shape->dims[0];
-    unsigned int M = C->shape->dims[1];
-    unsigned int K = A->shape->dims[1];
+    unsigned int N = C->shape[0];
+    unsigned int M = C->shape[1];
+    unsigned int K = A->shape[1];
 
-    assert(A->shape->dims[1] == B->shape->dims[0]);
+    assert(A->shape[1] == B->shape[0]);
 
     for (unsigned int i = 0; i < N; i++) {
         for (unsigned int j = 0; j < M; j++) {
@@ -432,7 +433,6 @@ int main(int argc, char *argv[]) {
         if (strcmp(argv[i], "-s") == 0)
             seed = atoi(argv[i + 1]);
     }
-    printf("%d\n", seed);
     cfg.seed = seed;
 
     srand(cfg.seed);
@@ -442,68 +442,68 @@ int main(int argc, char *argv[]) {
 
     ainit(&barena);
 
-    unsigned int N = 1000;
+    unsigned int N = 2;
 
     /* TODO: add calloc to Allocator */
     /* Shape *shp = acalloc(&barena, sizeof(Shape), alignof(Shape)); */
-    Shape *shp = babel_allocator.malloc(sizeof(Shape), babel_allocator.ctx);
+    /* Shape *shp = babel_allocator.malloc(sizeof(Shape), babel_allocator.ctx); */
     /* unsigned int *dims = acalloc(&barena, sizeof(unsigned int) * 2, alignof(unsigned int)); */
-    unsigned int *dims = babel_allocator.malloc(sizeof(unsigned int) * 2, babel_allocator.ctx);
-    dims[0] = N;
-    dims[1] = N;
+    unsigned int *shape = babel_allocator.malloc(sizeof(unsigned int) * 2, babel_allocator.ctx);
+    shape[0] = N;
+    shape[1] = N;
     unsigned int ndims = 2;
-    shpinit(shp, dims, ndims);
+    /* shpinit(shp, dims, ndims); */
 
     Matrix A = {0};
-    matinit(&A, shp, &babel_allocator);
+    matinit(&A, shape, ndims, &babel_allocator);
 
     float total = 0;
-    for (int i = 0; i < A.shape->dims[0]; i++) {
-        for (int j = 0; j < A.shape->dims[1]; j++)
+    for (int i = 0; i < A.shape[0]; i++) {
+        for (int j = 0; j < A.shape[1]; j++)
             matset(&A, i, j, total++);
     }
 
     Matrix B = {0};
-    matinit(&B, shp, &babel_allocator);
-    for (int i = 0; i < B.shape->dims[0]; i++) {
-        for (int j = 0; j < B.shape->dims[1]; j++)
+    matinit(&B, shape, ndims, &babel_allocator);
+    for (int i = 0; i < B.shape[0]; i++) {
+        for (int j = 0; j < B.shape[1]; j++)
             matset(&B, i, j, total--);
     }
 
-    /* for (int i = 0; i < A.shape->dims[0]; i++) { */
-    /*     for (int j = 0; j < A.shape->dims[1]; j++) */
-    /*         printf("%f ", matlookup(&A, i, j)); */
-    /*     printf("\n"); */
-    /* } */
+    for (int i = 0; i < A.shape[0]; i++) {
+        for (int j = 0; j < A.shape[1]; j++)
+            printf("%f ", matlookup(&A, i, j));
+        printf("\n");
+    }
 
-    /* printf("\n"); */
-    /* for (int i = 0; i < B.shape->dims[0]; i++) { */
-    /*     for (int j = 0; j < B.shape->dims[1]; j++) */
-    /*         printf("%f ", matlookup(&B, i, j)); */
-    /*     printf("\n"); */
-    /* } */
+    printf("\n");
+    for (int i = 0; i < B.shape[0]; i++) {
+        for (int j = 0; j < B.shape[1]; j++)
+            printf("%f ", matlookup(&B, i, j));
+        printf("\n");
+    }
 
     Matrix C = {0};
-    matinit(&C, shp, &babel_allocator);
+    matinit(&C, shape, ndims, &babel_allocator);
 
 
     clock_t t0 = clock();
 
-    /* matmul(&A, &B, &C); */
+    matmul(&A, &B, &C);
 
     clock_t t1 = clock();
     unsigned long dtmatmul = (((double)(t1 - t0) / CLOCKS_PER_SEC) * 1000000000); /* time in ns */
 
-    /* printf("dt(matmul) = %ld\n", dtmatmul); */
+    printf("dt(matmul) = %ld\n", dtmatmul);
 
-    /* printf("\n"); */
-    /* for (int i = 0; i < C.shape->dims[0]; i++) { */
-    /*     for (int j = 0; j < C.shape->dims[1]; j++) */
-    /*         printf("%f ", matlookup(&C, i, j)); */
-    /*     printf("\n"); */
-    /* } */
+    printf("\n");
+    for (int i = 0; i < C.shape[0]; i++) {
+        for (int j = 0; j < C.shape[1]; j++)
+            printf("%f ", matlookup(&C, i, j));
+        printf("\n");
+    }
 
-    /* exit(0); */
+    exit(0);
 
     Samples ss = {0};
     ssinit(&ss, &babel_allocator);
