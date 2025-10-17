@@ -25,6 +25,7 @@
 typedef struct {
   bool quiet;
   bool filter;
+  unsigned int seed;
 } Config;
 
 typedef struct {

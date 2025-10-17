@@ -423,14 +423,19 @@ void matmul(Matrix *A, Matrix *B, Matrix *C) {
 
 /* TODO: add Rec expr (with base case 0) */
 int main(int argc, char *argv[]) {
-    /* srand(SEED); */
-    srand(time(NULL));
 
     Config cfg = {0};
+    unsigned int seed = time(NULL);
     for (int i = 0; i < argc; i++) {
         cfg.quiet = cfg.quiet || (strcmp(argv[i], "-q") == 0);
         cfg.filter = cfg.filter || (strcmp(argv[i], "-f") == 0);
+        if (strcmp(argv[i], "-s") == 0)
+            seed = atoi(argv[i + 1]);
     }
+    printf("%d\n", seed);
+    cfg.seed = seed;
+
+    srand(cfg.seed);
 
     if (!cfg.quiet)
         prologue();
