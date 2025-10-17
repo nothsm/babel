@@ -23,6 +23,11 @@
 #define DTYPE float
 
 typedef struct {
+  bool quiet;
+  bool filter;
+} Config;
+
+typedef struct {
   char *buf;
   unsigned int len;
   unsigned int cap;

@@ -426,14 +426,13 @@ int main(int argc, char *argv[]) {
     /* srand(SEED); */
     srand(time(NULL));
 
-    bool quiet_mode = false;
-    bool filter_mode = false;
+    Config cfg = {0};
     for (int i = 0; i < argc; i++) {
-        quiet_mode = quiet_mode || (strcmp(argv[i], "-q") == 0);
-        filter_mode = filter_mode || (strcmp(argv[i], "-f") == 0);
+        cfg.quiet = cfg.quiet || (strcmp(argv[i], "-q") == 0);
+        cfg.filter = cfg.filter || (strcmp(argv[i], "-f") == 0);
     }
 
-    if (!quiet_mode)
+    if (!cfg.quiet)
         prologue();
 
     ainit(&barena);
@@ -503,7 +502,7 @@ int main(int argc, char *argv[]) {
 
     Samples ss = {0};
     ssinit(&ss, &babel_allocator);
-    if (filter_mode) {
+    if (cfg.filter) {
         char line[BUFSIZE] = {0};
 
         while (mygetline(line, BUFSIZE) > 0) {
@@ -657,6 +656,8 @@ int main(int argc, char *argv[]) {
  *
  * - allow users to specify rewrite rules
  * - add C rewrite rules
+ * - efficient compression of source code using dataflow/rewrite rules?
+ * - python compiler
  *
  * - 3 interfaces:
  *   - c library
