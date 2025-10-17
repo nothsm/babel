@@ -260,8 +260,6 @@ Expr *pslookup(Programs *ps, unsigned int i) {
 }
 
 void psrandgrow(Programs *ps, unsigned int n, Allocator *a) {
-    /* TODO: initialize rand with srand */
-
     unsigned int count = 0;
     while (count++ < n) {
         unsigned int v = rand() % 3; /* TODO: use my own prng */
@@ -376,15 +374,6 @@ Programs sssynthesize(Samples *ss, unsigned int depth, Allocator *a) {
     return ps;
 }
 
-/* TODO: Should I dup dims? */
-/* void shpinit(Shape *shp, unsigned int *dims, unsigned int ndims) { */
-/*     for (int i = 0; i < ndims; i++) */
-/*         assert(dims[i] > 0); */
-
-/*     shp->dims = dims; */
-/*     shp->ndims = ndims; */
-/* } */
-
 void matinit(Matrix *mat, unsigned int *shape, unsigned int ndims, Allocator *a) {
     assert(ndims == 2);
 
@@ -422,7 +411,6 @@ void matmul(Matrix *A, Matrix *B, Matrix *C) {
     }
 }
 
-/* TODO: add Rec expr (with base case 0) */
 int main(int argc, char *argv[]) {
 
     Config cfg = {0};
@@ -445,14 +433,10 @@ int main(int argc, char *argv[]) {
     unsigned int N = 2;
 
     /* TODO: add calloc to Allocator */
-    /* Shape *shp = acalloc(&barena, sizeof(Shape), alignof(Shape)); */
-    /* Shape *shp = babel_allocator.malloc(sizeof(Shape), babel_allocator.ctx); */
-    /* unsigned int *dims = acalloc(&barena, sizeof(unsigned int) * 2, alignof(unsigned int)); */
     unsigned int *shape = babel_allocator.malloc(sizeof(unsigned int) * 2, babel_allocator.ctx);
     shape[0] = N;
     shape[1] = N;
     unsigned int ndims = 2;
-    /* shpinit(shp, dims, ndims); */
 
     Matrix A = {0};
     matinit(&A, shape, ndims, &babel_allocator);
@@ -470,18 +454,18 @@ int main(int argc, char *argv[]) {
             matset(&B, i, j, total--);
     }
 
-    for (int i = 0; i < A.shape[0]; i++) {
-        for (int j = 0; j < A.shape[1]; j++)
-            printf("%f ", matlookup(&A, i, j));
-        printf("\n");
-    }
+    /* for (int i = 0; i < A.shape[0]; i++) { */
+    /*     for (int j = 0; j < A.shape[1]; j++) */
+    /*         printf("%f ", matlookup(&A, i, j)); */
+    /*     printf("\n"); */
+    /* } */
 
-    printf("\n");
-    for (int i = 0; i < B.shape[0]; i++) {
-        for (int j = 0; j < B.shape[1]; j++)
-            printf("%f ", matlookup(&B, i, j));
-        printf("\n");
-    }
+    /* printf("\n"); */
+    /* for (int i = 0; i < B.shape[0]; i++) { */
+    /*     for (int j = 0; j < B.shape[1]; j++) */
+    /*         printf("%f ", matlookup(&B, i, j)); */
+    /*     printf("\n"); */
+    /* } */
 
     Matrix C = {0};
     matinit(&C, shape, ndims, &babel_allocator);
@@ -489,21 +473,21 @@ int main(int argc, char *argv[]) {
 
     clock_t t0 = clock();
 
-    matmul(&A, &B, &C);
+    /* matmul(&A, &B, &C); */
 
     clock_t t1 = clock();
     unsigned long dtmatmul = (((double)(t1 - t0) / CLOCKS_PER_SEC) * 1000000000); /* time in ns */
 
-    printf("dt(matmul) = %ld\n", dtmatmul);
+    /* printf("dt(matmul) = %ld\n", dtmatmul); */
 
-    printf("\n");
-    for (int i = 0; i < C.shape[0]; i++) {
-        for (int j = 0; j < C.shape[1]; j++)
-            printf("%f ", matlookup(&C, i, j));
-        printf("\n");
-    }
+    /* printf("\n"); */
+    /* for (int i = 0; i < C.shape[0]; i++) { */
+    /*     for (int j = 0; j < C.shape[1]; j++) */
+    /*         printf("%f ", matlookup(&C, i, j)); */
+    /*     printf("\n"); */
+    /* } */
 
-    exit(0);
+    /* exit(0); */
 
     Samples ss = {0};
     ssinit(&ss, &babel_allocator);
@@ -549,18 +533,6 @@ int main(int argc, char *argv[]) {
         printf("%s %d %d %d\n", s, eeval(e, NULL, 0, ss.xs[0]), eeval(e, NULL, 0, ss.xs[1]), eeval(e, NULL, 0, ss.xs[2]));
         free(s);
     }
-
-    /* for (int i = 0; i < ps.len; i++) { */
-    /*     Expr *e = pslookup(&ps, i); */
-    /*     char *s = eshow(e); */
-    /*     printf("%s\n", s); */
-    /*     if (strcmp(s, "(Add (Rec (Add Input (Num -1))) (Rec (Add Input (Num -2))))") == 0) { */
-    /*         printf("FOUND FOUND FOUND"); */
-    /*         free(s); */
-    /*         exit(1); */
-    /*     } */
-    /*     free(s); */
-    /* } */
 
     if (ps.len > nshow)
         printf("...\n");
