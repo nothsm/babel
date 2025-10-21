@@ -15,6 +15,8 @@
 #include <time.h>
 #include "babel.h"
 
+unsigned int MAGIC_SQUARE[9] = {2, 9, 4, 7, 5, 3, 6, 1, 8};
+
 /* TODO: make sure the alignof's are safe */
 #define alignof(type) ((size_t)&((struct { char c; type d; } *)0)->d) /* TODO: magic from stackoverflow */
 
@@ -383,13 +385,32 @@ void matinit(Matrix *mat, unsigned int *shape, unsigned int ndims, Allocator *a)
     mat->ndims = ndims;
 }
 
-float matlookup(Matrix *mat, unsigned int i, unsigned int j) {
+/* TODO: check strides */
+void matcheck(const Matrix *mat) {
+    assert(mat != NULL);
+    assert(mat->shape != NULL);
+    assert(mat->strides != NULL);
+    assert(mat->buf != NULL);
+    assert(mat->ndims >= 1);
+    assert(mat->ndims <= 2);
+    for (int i = 0; i < mat->ndims; i++)
+        assert(mat->shape[i] >= 1);
+}
+
+float matlookup(const Matrix *mat, const unsigned int i, const unsigned int j) {
     /* TODO */
     return mat->buf[(mat->shape[1] * i) + j];
 }
 
 void matset(Matrix *mat, unsigned int i, unsigned int j, float x) {
     mat->buf[(mat->shape[1] * i) + j] = x;
+}
+
+/* TODO */
+Matrix matslice(const Matrix *mat) {
+    Matrix out = {0};
+
+    return out;
 }
 
 /* TODO */
@@ -411,6 +432,27 @@ void matmul(Matrix *A, Matrix *B, Matrix *C) {
     }
 }
 
+TicEnv *ticnew() {
+   return NULL;
+   /* TODO */
+}
+
+void ticprint() {
+    /* TODO */
+}
+
+void ticinit() {
+    /* TODO */
+}
+
+void ticsample() {
+    /* TODO */
+}
+
+void ticstep() {
+    /* TODO */
+}
+
 int main(int argc, char *argv[]) {
 
     Config cfg = {0};
@@ -430,7 +472,7 @@ int main(int argc, char *argv[]) {
 
     ainit(&barena);
 
-    unsigned int N = 2;
+    unsigned int N = 4;
 
     /* TODO: add calloc to Allocator */
     unsigned int *shape = babel_allocator.malloc(sizeof(unsigned int) * 2, babel_allocator.ctx);
@@ -454,18 +496,18 @@ int main(int argc, char *argv[]) {
             matset(&B, i, j, total--);
     }
 
-    /* for (int i = 0; i < A.shape[0]; i++) { */
-    /*     for (int j = 0; j < A.shape[1]; j++) */
-    /*         printf("%f ", matlookup(&A, i, j)); */
-    /*     printf("\n"); */
-    /* } */
+    for (int i = 0; i < A.shape[0]; i++) {
+        for (int j = 0; j < A.shape[1]; j++)
+            printf("%f ", matlookup(&A, i, j));
+        printf("\n");
+    }
 
-    /* printf("\n"); */
-    /* for (int i = 0; i < B.shape[0]; i++) { */
-    /*     for (int j = 0; j < B.shape[1]; j++) */
-    /*         printf("%f ", matlookup(&B, i, j)); */
-    /*     printf("\n"); */
-    /* } */
+    printf("\n");
+    for (int i = 0; i < B.shape[0]; i++) {
+        for (int j = 0; j < B.shape[1]; j++)
+            printf("%f ", matlookup(&B, i, j));
+        printf("\n");
+    }
 
     Matrix C = {0};
     matinit(&C, shape, ndims, &babel_allocator);
@@ -473,21 +515,20 @@ int main(int argc, char *argv[]) {
 
     clock_t t0 = clock();
 
-    /* matmul(&A, &B, &C); */
+    matmul(&A, &B, &C);
 
     clock_t t1 = clock();
     unsigned long dtmatmul = (((double)(t1 - t0) / CLOCKS_PER_SEC) * 1000000000); /* time in ns */
 
-    /* printf("dt(matmul) = %ld\n", dtmatmul); */
+    printf("\n");
+    printf("dt(matmul) = %ld\n", dtmatmul);
+    for (int i = 0; i < C.shape[0]; i++) {
+        for (int j = 0; j < C.shape[1]; j++)
+            printf("%f ", matlookup(&C, i, j));
+        printf("\n");
+    }
 
-    /* printf("\n"); */
-    /* for (int i = 0; i < C.shape[0]; i++) { */
-    /*     for (int j = 0; j < C.shape[1]; j++) */
-    /*         printf("%f ", matlookup(&C, i, j)); */
-    /*     printf("\n"); */
-    /* } */
-
-    /* exit(0); */
+    exit(0);
 
     Samples ss = {0};
     ssinit(&ss, &babel_allocator);
@@ -621,6 +662,32 @@ int main(int argc, char *argv[]) {
  * - high performance, simd optimization
  * - add tensor library
  *
+ * - Tasks:
+ *   - tic tac toe
+ *   - maze
+ *   - list processing
+ *   - symbolic regression
+ *   - physical laws
+ *   - sudoku
+ *   - arc
+ *   - oeis
+ *   - compiler superoptimization
+ *   - ml compiler superoptimization
+ * - Add raylib plotting
+ * - optimize matmul
+ * - arbitrary shape tensors
+ * - use an ebm classifier?
+ * - search algorithms
+ *   - top down synthesis
+ *   - bottom up synthesis
+ *   - backtracking
+ *   - random sampling
+ *   - mcts
+ *   - simulated annealing
+ *   - evolutionary or genetic methods
+ *   - linear programming
+ *   - reinforcement learning
+ *
  * - 3 language frontends:
  *   - scheme
  *   - c
@@ -635,6 +702,19 @@ int main(int argc, char *argv[]) {
  * - add C rewrite rules
  * - efficient compression of source code using dataflow/rewrite rules?
  * - python compiler
+ *
+ * - RL:
+ *   - Agent
+ *   - Env
+ * - Learning
+ *   - Dataset
+ *   - Optimizer
+ *   - Loss
+ *   - Classifier/Model
+ * - Synthesis
+ *   - Dataset
+ *   - DSL
+ *   - Synthesizer
  *
  * - 3 interfaces:
  *   - c library
