@@ -8,6 +8,7 @@
  * sum demo: cat data/sum.txt | make filter
  */
 #include <assert.h>  /* for assert */
+#include <math.h>
 #include <stdbool.h> /* for bool */
 #include <stdio.h>   /* for EOF, getline, printf, putchar, size_t, ssize_t, stdin */
 #include <stdlib.h>  /* for free */
@@ -451,6 +452,15 @@ void ticsample() {
 
 void ticstep() {
     /* TODO */
+}
+
+/* TODO: use proper powers here */
+float distance(float x[2], float y[2]) {
+    return sqrt(pow(x[0] - y[0], 2.0) + pow(x[1] - y[1], 2.0));
+}
+
+float tsp(float **cities, unsigned int ncities) {
+    return -1.0;
 }
 
 int main(int argc, char *argv[]) {

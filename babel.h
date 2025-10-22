@@ -118,6 +118,14 @@ typedef struct {
 
 typedef struct {
   unsigned int foo;
+} TSPEnv;
+
+typedef struct {
+  unsigned int foo;
+} SudokuEnv;
+
+typedef struct {
+  unsigned int foo;
 } SynthesisEnv;
 
 typedef struct {
