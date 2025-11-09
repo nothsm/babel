@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 #define BABEL_VERSION "0.1.0"
 #define BABEL_DATE "2025-10-06"
 #define BABEL_LOGO                                                             \
@@ -13,6 +15,7 @@
 /* #define MEMCAP (64 * 1024) /\* 64KB mem lim *\/ */
 #define MEMCAP (1024 * 1024 * 1024) /* 256MB mem lim... TODO: decrease this shit! */
 #define ARRCAP 1024 /* TODO: decrease this */
+#define STRCAP (1024 * 2)
 #define RECLIM 32
 #define MAXPROGRAMS (32 * 1024 * 1024) /* 8MB limit... TODO: decrease this */
 #define NGROW 32
