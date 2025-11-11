@@ -1,35 +1,21 @@
 /*
  * try it with: make engine && ./engine
  */
-
-#include "babel.h"
-
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-
-typedef struct Value Value;
-
-typedef enum {
-    VAL_ADD,
-    VAL_MUL,
-    VAL_FLOAT
-} ValueType;
-
-/* Can I just make this a normal Expr? */
-struct Value {
-    unsigned int id;
-    ValueType op;
-    float val;
-    float grad;
-    Value *prev1;
-    Value *prev2;
-};
+#include <time.h>
+#include "babel.h"
 
 char STRTAB[STRCAP];
 unsigned int allocated;
 
 unsigned int vid;
+
+extern Value WTTAB[VALCAP];
+extern unsigned int nwt;
 
 void stdbg(unsigned int beg, unsigned int end) {
     for (int i = beg; i < end; i++)
@@ -40,7 +26,8 @@ void valcheck(Value *v) {
     assert(v != NULL);
     assert(v->op == VAL_ADD ||
            v->op == VAL_MUL ||
-           v->op == VAL_FLOAT);
+           v->op == VAL_FLOAT ||
+           v->op == VAL_TANH);
     assert((v->prev1 != NULL && v->prev2 != NULL) ||
            (v->prev1 != NULL && v->prev2 == NULL) ||
            (v->prev1 == NULL && v->prev2 == NULL));
@@ -81,6 +68,14 @@ char *vtshow(ValueType vt) {
             return STRTAB + old_allocated;
         case VAL_MUL:
             n = snprintf(STRTAB + allocated, STRCAP, "%s", "*");
+
+            assert(n >= 0);
+            assert(allocated + n + 1 < STRCAP);
+
+            allocated += n + 1;
+            return STRTAB + old_allocated;
+        case VAL_TANH:
+            n = snprintf(STRTAB + allocated, STRCAP, "%s", "tanh");
 
             assert(n >= 0);
             assert(allocated + n + 1 < STRCAP);
@@ -179,7 +174,7 @@ char *valsexpr(Value *v) {
         old_allocated = allocated;
 
         n = snprintf(STRTAB + allocated, STRCAP,
-                 "(%s %s %s :val %.2f :grad %.2f)",
+                 "(%s %s %s :val %.5f :grad %.5f)",
                  op,
                  s1,
                  s2,
@@ -197,7 +192,7 @@ char *valsexpr(Value *v) {
         old_allocated = allocated;
 
         n = snprintf(STRTAB + allocated, STRCAP,
-                 "(%s %s :val %.2f :grad %.2f)",
+                 "(%s %s :val %.5f :grad %.5f)",
                  op,
                  s,
                  v->val,
@@ -213,7 +208,7 @@ char *valsexpr(Value *v) {
         old_allocated = allocated;
 
         n = snprintf(STRTAB + allocated, STRCAP,
-                 "(%s %.2f :grad %.2f)",
+                 "(%s %.5f :grad %.5f)",
                  op,
                  v->val,
                  v->grad);
@@ -245,6 +240,14 @@ Value *valmul(Value *x, Value *y, Value *ret) {
     return ret;
 }
 
+Value *valtanh(Value *x, Value *ret) {
+    valcheck(x);
+    assert(ret != NULL);
+
+    valinit(ret, VAL_TANH, (exp(2 * x->val) - 1) / (exp(2 * x->val) + 1), x, NULL);
+    return ret;
+}
+
 void valaddbwd(Value *v) {
     valcheck(v);
     assert(v->op == VAL_ADD);
@@ -265,6 +268,20 @@ void valmulbwd(Value *v) {
     valcheck(v);
 }
 
+void valtanhbwd(Value *v) {
+    valcheck(v);
+    assert(v->op == VAL_TANH);
+    assert(v->prev2 == NULL);
+
+    /* assert(false); */
+
+    float t = v->val;
+
+    v->prev1->grad += v->grad * (1 - (t * t)); /* TODO */
+
+    valcheck(v);
+}
+
 void valbwd1(Value *v) {
     valcheck(v);
 
@@ -275,6 +292,8 @@ void valbwd1(Value *v) {
         case VAL_MUL:
             valmulbwd(v);
             break;
+        case VAL_TANH:
+            valtanhbwd(v);
         case VAL_FLOAT:
             break;
         default:
@@ -326,12 +345,15 @@ float f(float x) {
 }
 
 int main(int argc, char **argv) {
+    srand(time(NULL)); /* TODO: use a proper seed */
+
     memset(STRTAB, 0, STRCAP);
     allocated = 0;
 
     vid = 0;
 
-    printf("%.3f\n", f(3.0));
+    memset(WTTAB, 0, VALCAP);
+    nwt = 0;
 
     Value a = {0};
     Value b = {0};
@@ -356,10 +378,8 @@ int main(int argc, char **argv) {
     printf("d = %s\n", valsexpr(&d));
     printf("f = %s\n", valsexpr(&f));
     printf("L = %s\n", valsexpr(&L));
-
-    printf("\n --- backpropagating... ---\n\n");
+    printf("backpropagating...\n");
     valbwd(&L);
-
     printf("a = %s\n", valsexpr(&a));
     printf("b = %s\n", valsexpr(&b));
     printf("c = %s\n", valsexpr(&c));
@@ -367,8 +387,81 @@ int main(int argc, char **argv) {
     printf("d = %s\n", valsexpr(&d));
     printf("f = %s\n", valsexpr(&f));
     printf("L = %s\n", valsexpr(&L));
-    printf("\n");
 
+    printf("\n");
+    printf("--- tanh ---\n");
+    Value x1 = {0};
+    Value x2 = {0};
+    Value w1 = {0};
+    Value w2 = {0};
+    Value b_ = {0};
+    Value x1w1 = {0};
+    Value x2w2 = {0};
+    Value x1w1x2w2 = {0};
+    Value n_ = {0};
+    Value o = {0};
+
+    valinit(&x1, VAL_FLOAT, 2.0, NULL, NULL);
+    valinit(&x2, VAL_FLOAT, 0.0, NULL, NULL);
+    valinit(&w1, VAL_FLOAT, -3.0, NULL, NULL);
+    valinit(&w2, VAL_FLOAT, 1.0, NULL, NULL);
+    valinit(&b_, VAL_FLOAT, 6.8813735870195432, NULL, NULL);
+    valmul(&x1, &w1, &x1w1);
+    valmul(&x2, &w2, &x2w2);
+    valadd(&x1w1, &x2w2, &x1w1x2w2);
+    valadd(&x1w1x2w2, &b_, &n_);
+    valtanh(&n_, &o);
+    printf("x1 = %s\n", valsexpr(&x1));
+    printf("x2 = %s\n", valsexpr(&x2));
+    printf("w1 = %s\n", valsexpr(&w1));
+    printf("w2 = %s\n", valsexpr(&w2));
+    printf("b_ = %s\n", valsexpr(&b_));
+    printf("x1w1 = %s\n", valsexpr(&x1w1));
+    printf("x2w2 = %s\n", valsexpr(&x2w2));
+    printf("x1w1x2w2 = %s\n", valsexpr(&x1w1x2w2));
+    printf("n_ = %s\n", valsexpr(&n_));
+    printf("o = %s\n", valsexpr(&o));
+    printf("backpropagating...\n");
+    valbwd(&o);
+    printf("x1 = %s\n", valsexpr(&x1));
+    printf("x2 = %s\n", valsexpr(&x2));
+    printf("w1 = %s\n", valsexpr(&w1));
+    printf("w2 = %s\n", valsexpr(&w2));
+    printf("b_ = %s\n", valsexpr(&b_));
+    printf("x1w1 = %s\n", valsexpr(&x1w1));
+    printf("x2w2 = %s\n", valsexpr(&x2w2));
+    printf("x1w1x2w2 = %s\n", valsexpr(&x1w1x2w2));
+    printf("n_ = %s\n", valsexpr(&n_));
+    printf("o = %s\n", valsexpr(&o));
+
+
+    printf("\n");
+    Neuron n = {0};
+    unsigned int nin = 3;
+    Value act = {0};
+    Value vret = {0};
+
+    ninit(&n, nin);
+    /* printf("%s\n", nshow(&n)); */
+    /* printf("%.5f %.5f %.5f %.5f %.5f\n", n.w[0].val, n.w[1].val, n.w[2].val, n.w[3].val, n.w[4].val); */
+    printf("%.5f %.5f %.5f\n", n.w[0].val, n.w[1].val, n.w[2].val);
+
+    printf("%s\n", valsexpr(&act));
+
+    Value x[3] = {0};
+    Value multmp[3] = {0};
+    Value addtmp[3 - 1] = {0};
+    valinit(x, VAL_FLOAT, 2.0, NULL, NULL);
+    valinit(x + 1, VAL_FLOAT, 3.0, NULL, NULL);
+    valinit(x + 2, VAL_FLOAT, -1.0, NULL, NULL);
+    /* valinit(x + 3, VAL_FLOAT, 0.5, NULL, NULL); */
+    /* valinit(x + 4, VAL_FLOAT, 1.5, NULL, NULL); */
+    nfwd(&n, x, nin, multmp, addtmp, &act, &vret);
+
+
+    printf("%s\n", valsexpr(&act));
+
+    /* printf("%f\n", (2 * frand()) - 1); */
 }
 
 /*

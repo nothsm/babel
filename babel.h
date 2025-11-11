@@ -15,7 +15,7 @@
 /* #define MEMCAP (64 * 1024) /\* 64KB mem lim *\/ */
 #define MEMCAP (1024 * 1024 * 1024) /* 256MB mem lim... TODO: decrease this shit! */
 #define ARRCAP 1024 /* TODO: decrease this */
-#define STRCAP (1024 * 4)
+#define STRCAP (1024 * 16)
 #define VALCAP 128
 #define RECLIM 32
 #define MAXPROGRAMS (32 * 1024 * 1024) /* 8MB limit... TODO: decrease this */
@@ -90,6 +90,42 @@ typedef struct {
     unsigned int len;
     unsigned int cap;
 } Programs;
+
+typedef struct Value Value;
+
+typedef enum {
+    VAL_ADD,
+    VAL_MUL,
+    VAL_TANH,
+    VAL_FLOAT
+} ValueType;
+
+/* Can I just make this a normal Expr? */
+struct Value {
+    unsigned int id;
+    ValueType op;
+    float val;
+    float grad;
+    Value *prev1;
+    Value *prev2;
+};
+
+Value *valinit(Value *v, ValueType op, float val, Value *prev1, Value *prev2);
+void valcheck(Value *);
+char *valshow(Value *);
+Value *valmul(Value *x, Value *y, Value *ret);
+Value *valadd(Value *x, Value *y, Value *ret);
+
+typedef struct {
+    Value *w;
+    Value b;
+    unsigned int nin;
+} Neuron;
+
+void ncheck(Neuron *n);
+void ninit(Neuron *n, unsigned int nin);
+char *nshow(Neuron *n);
+Value *nfwd(Neuron *n, Value *x, unsigned int nin, Value *multmp, Value *addtmp, Value *act, Value *ret);
 
 /* typedef struct { */
 /*   unsigned int *dims; */
