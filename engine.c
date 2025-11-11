@@ -1,3 +1,7 @@
+/*
+ * try it with: make engine && ./engine
+ */
+
 #include "babel.h"
 
 #include <assert.h>
