@@ -355,6 +355,8 @@ int main(int argc, char **argv) {
     memset(WTTAB, 0, VALCAP);
     nwt = 0;
 
+    printf("--- add, mul, bwd ---\n");
+
     Value a = {0};
     Value b = {0};
     Value c = {0};
@@ -436,17 +438,14 @@ int main(int argc, char **argv) {
 
 
     printf("\n");
+    printf("--- Neuron ---\n");
     Neuron n = {0};
     unsigned int nin = 3;
     Value act = {0};
     Value vret = {0};
 
     ninit(&n, nin);
-    /* printf("%s\n", nshow(&n)); */
-    /* printf("%.5f %.5f %.5f %.5f %.5f\n", n.w[0].val, n.w[1].val, n.w[2].val, n.w[3].val, n.w[4].val); */
     printf("%.5f %.5f %.5f\n", n.w[0].val, n.w[1].val, n.w[2].val);
-
-    printf("%s\n", valsexpr(&act));
 
     Value x[3] = {0};
     Value multmp[3] = {0};
@@ -454,14 +453,63 @@ int main(int argc, char **argv) {
     valinit(x, VAL_FLOAT, 2.0, NULL, NULL);
     valinit(x + 1, VAL_FLOAT, 3.0, NULL, NULL);
     valinit(x + 2, VAL_FLOAT, -1.0, NULL, NULL);
-    /* valinit(x + 3, VAL_FLOAT, 0.5, NULL, NULL); */
-    /* valinit(x + 4, VAL_FLOAT, 1.5, NULL, NULL); */
     nfwd(&n, x, nin, multmp, addtmp, &act, &vret);
+    printf("%s\n", valsexpr(&vret));
+    valbwd(&vret);
+    printf("%s\n", valsexpr(&vret));
 
+    Value X0[3] = {0};
+    Value X1[3] = {0};
+    Value X2[3] = {0};
+    Value X3[3] = {0};
+    Value *xs[4] = {X0, X1, X2, X3};
+    Value ys[4] = {0};
+    valinit(X0 + 0, VAL_FLOAT, 2.0, NULL, NULL);
+    valinit(X0 + 1 , VAL_FLOAT, 3.0, NULL, NULL);
+    valinit(X0 + 2, VAL_FLOAT, -1.0, NULL, NULL);
 
-    printf("%s\n", valsexpr(&act));
+    valinit(X1 + 0, VAL_FLOAT, 3.0, NULL, NULL);
+    valinit(X1 + 1 , VAL_FLOAT, -1.0, NULL, NULL);
+    valinit(X1 + 2, VAL_FLOAT, 0.5, NULL, NULL);
 
-    /* printf("%f\n", (2 * frand()) - 1); */
+    valinit(X2 + 0, VAL_FLOAT, 0.5, NULL, NULL);
+    valinit(X2 + 1 , VAL_FLOAT, 1.0, NULL, NULL);
+    valinit(X2 + 2, VAL_FLOAT, 1.0, NULL, NULL);
+
+    valinit(X3 + 0, VAL_FLOAT, 1.0, NULL, NULL);
+    valinit(X3 + 1 , VAL_FLOAT, 1.0, NULL, NULL);
+    valinit(X3 + 2, VAL_FLOAT, -1.0, NULL, NULL);
+
+    valinit(ys + 0, VAL_FLOAT, 1.0, NULL, NULL);
+    valinit(ys + 1, VAL_FLOAT, -1.0, NULL, NULL);
+    valinit(ys + 2, VAL_FLOAT, -1.0, NULL, NULL);
+    valinit(ys + 3, VAL_FLOAT, 1.0, NULL, NULL);
+
+    /* for (int i = 0; i < 20; i++) { */
+    /*     Value acts[4] = {0}; */
+    /*     Value ypreds[4] = {0}; */
+    /*     Value losses[4] = {0}; */
+
+    /*     for (int j = 0; j < 4; j++) { */
+    /*         Value *act = acts + j; */
+    /*         Value *ypred = ypred + j; */
+    /*         Value *ygt = ys + j; */
+    /*         Value *loss = losses + j; */
+
+    /*         Value multmp[3] = {0}; */
+    /*         Value addtmp[3 - 1] = {0}; */
+    /*         nfwd(&n, xs[i], 3, multmp, addtmp, act, ypred); */
+
+    /*         /\* valmul() *\/ */
+
+    /*     } */
+    /* } */
+
+    /* Value *vs[VALCAP] = {0}; */
+    /* unsigned int k = nparams(&n, vs); */
+    /* printf("\n"); */
+    /* for (int i = 0; i < k; i++) */
+    /*     printf("%s\n", valsexpr(vs[i])); */
 }
 
 /*

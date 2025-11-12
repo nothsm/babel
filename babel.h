@@ -115,6 +115,7 @@ void valcheck(Value *);
 char *valshow(Value *);
 Value *valmul(Value *x, Value *y, Value *ret);
 Value *valadd(Value *x, Value *y, Value *ret);
+Value *valtanh(Value *x, Value *ret);
 
 typedef struct {
     Value *w;
@@ -126,6 +127,7 @@ void ncheck(Neuron *n);
 void ninit(Neuron *n, unsigned int nin);
 char *nshow(Neuron *n);
 Value *nfwd(Neuron *n, Value *x, unsigned int nin, Value *multmp, Value *addtmp, Value *act, Value *ret);
+unsigned int nparams(Neuron *n, Value **ret);
 
 /* typedef struct { */
 /*   unsigned int *dims; */
