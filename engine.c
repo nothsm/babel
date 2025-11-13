@@ -12,6 +12,7 @@
 char STRTAB[STRCAP];
 unsigned int allocated;
 
+Value VALTAB[VALCAP];
 unsigned int vid;
 
 extern Value WTTAB[VALCAP];
@@ -35,6 +36,24 @@ void valcheck(Value *v) {
     assert(v->prev2 != v);
     assert(v->id < vid);
 }
+
+Value *valalloc(unsigned int n) {
+    assert(vid + n <= VALCAP);
+
+    unsigned int oldvid = vid;
+
+    Value *ret = VALTAB + vid;
+    for (int i = 0; i < n; i++)
+        valinit(VALTAB + vid, VAL_FLOAT, 0.0, NULL, NULL);
+
+    assert(ret->id == oldvid);
+    for (int i = 0; i < n; i++)
+        assert(VALTAB[oldvid + i].id == oldvid + i);
+
+    return ret;
+}
+
+/* TODO: add valfree */
 
 Value *valinit(Value *v, ValueType op, float val, Value *prev1, Value *prev2) {
     assert(prev1 != v);
@@ -222,29 +241,47 @@ char *valsexpr(Value *v) {
         assert(false);
 }
 
-Value *valadd(Value *x, Value *y, Value *ret) {
+Value *valadd(Value *x, Value *y) {
     valcheck(x);
     valcheck(y);
-    assert(ret != NULL);
 
-    valinit(ret, VAL_ADD, x->val + y->val, x, y);
+    Value *ret = valalloc(1);
+    ret->op = VAL_ADD;
+    ret->grad = 0.0;
+    ret->val = x->val + y->val;
+    ret->prev1 = x;
+    ret->prev2 = y;
+    /* valinit(ret, VAL_ADD, x->val + y->val, x, y); */
+
     return ret;
 }
 
-Value *valmul(Value *x, Value *y, Value *ret) {
+Value *valmul(Value *x, Value *y) {
     valcheck(x);
     valcheck(y);
-    assert(ret != NULL);
 
-    valinit(ret, VAL_MUL, x->val * y->val, x, y);
+    Value *ret = valalloc(1); /* TODO: add valinit back in this */
+    ret->op = VAL_MUL;
+    ret->grad = 0.0;
+    ret->val = x->val * y->val;
+    ret->prev1 = x;
+    ret->prev2 = y;
+    /* valinit(ret, VAL_MUL, x->val * y->val, x, y); */
+
     return ret;
 }
 
-Value *valtanh(Value *x, Value *ret) {
+Value *valtanh(Value *x) {
     valcheck(x);
-    assert(ret != NULL);
 
-    valinit(ret, VAL_TANH, (exp(2 * x->val) - 1) / (exp(2 * x->val) + 1), x, NULL);
+    Value *ret = valalloc(1);
+    ret->op = VAL_TANH;
+    ret->grad = 0.0;
+    ret->val = (exp(2 * x->val) - 1) / (exp(2 * x->val) + 1);
+    ret->prev1 = x;
+    ret->prev2 = NULL;
+    /* valinit(ret, VAL_TANH, (exp(2 * x->val) - 1) / (exp(2 * x->val) + 1), x, NULL); */
+
     return ret;
 }
 
@@ -350,45 +387,51 @@ int main(int argc, char **argv) {
     memset(STRTAB, 0, STRCAP);
     allocated = 0;
 
+    memset(VALTAB, 0, VALCAP);
     vid = 0;
 
     memset(WTTAB, 0, VALCAP);
     nwt = 0;
 
+    printf("--- valalloc ---\n");
+    Value *valloced = valalloc(3);
+    printf("%s\n", valshow(valloced + 0));
+    printf("%s\n", valshow(valloced + 1));
+    printf("%s\n", valshow(valloced + 2));
+
+
+    printf("\n");
     printf("--- add, mul, bwd ---\n");
 
     Value a = {0};
     Value b = {0};
     Value c = {0};
-    Value d = {0};
-    Value e = {0};
     Value f = {0};
-    Value L = {0};
 
     valinit(&a, VAL_FLOAT, 2.0, NULL, NULL);
     valinit(&b, VAL_FLOAT, -3.0, NULL, NULL);
     valinit(&c, VAL_FLOAT, 10.0, NULL, NULL);
-    e = *valmul(&a, &b, &e);
-    d = *valadd(&e, &c, &d);
+    Value *e = valmul(&a, &b);
+    Value *d = valadd(e, &c);
     valinit(&f, VAL_FLOAT, -2.0, NULL, NULL);
-    L = *valmul(&d, &f, &L);
+    Value *L = valmul(d, &f);
 
     printf("a = %s\n", valsexpr(&a));
     printf("b = %s\n", valsexpr(&b));
     printf("c = %s\n", valsexpr(&c));
-    printf("e = %s\n", valsexpr(&e));
-    printf("d = %s\n", valsexpr(&d));
+    printf("e = %s\n", valsexpr(e));
+    printf("d = %s\n", valsexpr(d));
     printf("f = %s\n", valsexpr(&f));
-    printf("L = %s\n", valsexpr(&L));
+    printf("L = %s\n", valsexpr(L));
     printf("backpropagating...\n");
-    valbwd(&L);
+    valbwd(L);
     printf("a = %s\n", valsexpr(&a));
     printf("b = %s\n", valsexpr(&b));
     printf("c = %s\n", valsexpr(&c));
-    printf("e = %s\n", valsexpr(&e));
-    printf("d = %s\n", valsexpr(&d));
+    printf("e = %s\n", valsexpr(e));
+    printf("d = %s\n", valsexpr(d));
     printf("f = %s\n", valsexpr(&f));
-    printf("L = %s\n", valsexpr(&L));
+    printf("L = %s\n", valsexpr(L));
 
     printf("\n");
     printf("--- tanh ---\n");
@@ -397,66 +440,57 @@ int main(int argc, char **argv) {
     Value w1 = {0};
     Value w2 = {0};
     Value b_ = {0};
-    Value x1w1 = {0};
-    Value x2w2 = {0};
-    Value x1w1x2w2 = {0};
-    Value n_ = {0};
-    Value o = {0};
 
     valinit(&x1, VAL_FLOAT, 2.0, NULL, NULL);
     valinit(&x2, VAL_FLOAT, 0.0, NULL, NULL);
     valinit(&w1, VAL_FLOAT, -3.0, NULL, NULL);
     valinit(&w2, VAL_FLOAT, 1.0, NULL, NULL);
     valinit(&b_, VAL_FLOAT, 6.8813735870195432, NULL, NULL);
-    valmul(&x1, &w1, &x1w1);
-    valmul(&x2, &w2, &x2w2);
-    valadd(&x1w1, &x2w2, &x1w1x2w2);
-    valadd(&x1w1x2w2, &b_, &n_);
-    valtanh(&n_, &o);
+    Value *x1w1 = valmul(&x1, &w1);
+    Value *x2w2 = valmul(&x2, &w2);
+    Value *x1w1x2w2 = valadd(x1w1, x2w2);
+    Value *n_ = valadd(x1w1x2w2, &b_);
+    Value *o = valtanh(n_);
     printf("x1 = %s\n", valsexpr(&x1));
     printf("x2 = %s\n", valsexpr(&x2));
     printf("w1 = %s\n", valsexpr(&w1));
     printf("w2 = %s\n", valsexpr(&w2));
     printf("b_ = %s\n", valsexpr(&b_));
-    printf("x1w1 = %s\n", valsexpr(&x1w1));
-    printf("x2w2 = %s\n", valsexpr(&x2w2));
-    printf("x1w1x2w2 = %s\n", valsexpr(&x1w1x2w2));
-    printf("n_ = %s\n", valsexpr(&n_));
-    printf("o = %s\n", valsexpr(&o));
+    printf("x1w1 = %s\n", valsexpr(x1w1));
+    printf("x2w2 = %s\n", valsexpr(x2w2));
+    printf("x1w1x2w2 = %s\n", valsexpr(x1w1x2w2));
+    printf("n_ = %s\n", valsexpr(n_));
+    printf("o = %s\n", valsexpr(o));
     printf("backpropagating...\n");
-    valbwd(&o);
+    valbwd(o);
     printf("x1 = %s\n", valsexpr(&x1));
     printf("x2 = %s\n", valsexpr(&x2));
     printf("w1 = %s\n", valsexpr(&w1));
     printf("w2 = %s\n", valsexpr(&w2));
     printf("b_ = %s\n", valsexpr(&b_));
-    printf("x1w1 = %s\n", valsexpr(&x1w1));
-    printf("x2w2 = %s\n", valsexpr(&x2w2));
-    printf("x1w1x2w2 = %s\n", valsexpr(&x1w1x2w2));
-    printf("n_ = %s\n", valsexpr(&n_));
-    printf("o = %s\n", valsexpr(&o));
+    printf("x1w1 = %s\n", valsexpr(x1w1));
+    printf("x2w2 = %s\n", valsexpr(x2w2));
+    printf("x1w1x2w2 = %s\n", valsexpr(x1w1x2w2));
+    printf("n_ = %s\n", valsexpr(n_));
+    printf("o = %s\n", valsexpr(o));
 
 
     printf("\n");
     printf("--- Neuron ---\n");
     Neuron n = {0};
     unsigned int nin = 3;
-    Value act = {0};
-    Value vret = {0};
 
     ninit(&n, nin);
     printf("%.5f %.5f %.5f\n", n.w[0].val, n.w[1].val, n.w[2].val);
 
     Value x[3] = {0};
-    Value multmp[3] = {0};
-    Value addtmp[3 - 1] = {0};
     valinit(x, VAL_FLOAT, 2.0, NULL, NULL);
     valinit(x + 1, VAL_FLOAT, 3.0, NULL, NULL);
     valinit(x + 2, VAL_FLOAT, -1.0, NULL, NULL);
-    nfwd(&n, x, nin, multmp, addtmp, &act, &vret);
-    printf("%s\n", valsexpr(&vret));
-    valbwd(&vret);
-    printf("%s\n", valsexpr(&vret));
+    Value *vret = nfwd(&n, x, nin);
+    printf("%s\n", valsexpr(vret));
+    valbwd(vret);
+    printf("%s\n", valsexpr(vret));
 
     Value X0[3] = {0};
     Value X1[3] = {0};

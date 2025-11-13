@@ -66,39 +66,41 @@ char *nshow(Neuron *n) {
 /* len(multmp) = nin */
 /* len(addtmp) = nin - 1 (these bounds are wrong) */
 /* TODO: support bias */
-Value *nfwd(Neuron *n, Value *x, unsigned int nin, Value *multmp, Value *addtmp, Value *act, Value *ret) {
+Value *nfwd(Neuron *n, Value *x, unsigned int nin) {
     ncheck(n);
     assert(nin == n->nin);
     assert(nin > 0);
     for (int i = 0; i < nin; i++)
         valcheck(x + i);
 
+    /* TODO: These take up wayyyyy too much space */
+    Value *multmp[VALCAP] = {0};
+    Value *addtmp[VALCAP] = {0};
+
     Value *w = n->w;
 
+    Value *act = NULL;
     if (nin == 1) {
-        assert(multmp == NULL);
-        assert(addtmp == NULL);
+        assert(false);
 
-        valmul(x + 0, w + 0, act);
+        act = valmul(x + 0, w + 0);
     } else if (nin == 2) {
-        assert(addtmp == NULL);
-
         for (int i = 0; i < nin; i++)
-            valmul(x + i, w + i, multmp + i);
+            multmp[i] = valmul(x + i, w + i);
 
-        valadd(multmp + 0, multmp + 1, act);
+        act = valadd(multmp[0], multmp[1]);
     } else {
         assert(nin >= 3);
 
         for (int i = 0; i < nin; i++)
-            valmul(x + i, w + i, multmp + i);
+            multmp[i] = valmul(x + i, w + i);
 
-        valadd(multmp + 0, multmp + 1, addtmp + 0);
+        addtmp[0] = valadd(multmp[0], multmp[1]);
         for (int i = 0; i < nin - 2; i++)
-            valadd(addtmp + i, (multmp + i) + 2, (addtmp + i) + 1);
-        valadd(addtmp + ((nin - 2) - 1), multmp + (nin - 1), act);
+            addtmp[i + 1] = valadd(addtmp[i], multmp[i + 2]);
+        act = valadd(addtmp[(nin - 2) - 1], multmp[nin - 1]);
     }
-    valtanh(act, ret);
+    Value *ret = valtanh(act);
 
     ncheck(n);
     valcheck(act);

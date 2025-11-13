@@ -113,9 +113,9 @@ struct Value {
 Value *valinit(Value *v, ValueType op, float val, Value *prev1, Value *prev2);
 void valcheck(Value *);
 char *valshow(Value *);
-Value *valmul(Value *x, Value *y, Value *ret);
-Value *valadd(Value *x, Value *y, Value *ret);
-Value *valtanh(Value *x, Value *ret);
+Value *valmul(Value *x, Value *y);
+Value *valadd(Value *x, Value *y);
+Value *valtanh(Value *x);
 
 typedef struct {
     Value *w;
@@ -126,7 +126,7 @@ typedef struct {
 void ncheck(Neuron *n);
 void ninit(Neuron *n, unsigned int nin);
 char *nshow(Neuron *n);
-Value *nfwd(Neuron *n, Value *x, unsigned int nin, Value *multmp, Value *addtmp, Value *act, Value *ret);
+Value *nfwd(Neuron *n, Value *x, unsigned int nin);
 unsigned int nparams(Neuron *n, Value **ret);
 
 /* typedef struct { */
