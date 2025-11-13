@@ -519,25 +519,46 @@ int main(int argc, char **argv) {
     valinit(ys + 2, VAL_FLOAT, -1.0, NULL, NULL);
     valinit(ys + 3, VAL_FLOAT, 1.0, NULL, NULL);
 
-    /* for (int i = 0; i < 20; i++) { */
-    /*     Value acts[4] = {0}; */
-    /*     Value ypreds[4] = {0}; */
-    /*     Value losses[4] = {0}; */
+    printf("\n --- Training neuron... ---\n");
+    for (int i = 0; i < 40; i++) {
+        /* Value *ypred[4] = {0}; */
+        Value *loss = NULL;
+        for (int j = 0; j < 4; j++) {
+            Value *ygt = ys + j;
+            Value *yout = nfwd(&n, xs[j], 3);
 
-    /*     for (int j = 0; j < 4; j++) { */
-    /*         Value *act = acts + j; */
-    /*         Value *ypred = ypred + j; */
-    /*         Value *ygt = ys + j; */
-    /*         Value *loss = losses + j; */
+            Value *neg = valalloc(1);
+            neg->op = VAL_FLOAT;
+            neg->val = -1.0;
+            neg->grad = 0.0;
+            neg->prev1 = NULL;
+            neg->prev2 = NULL;
 
-    /*         Value multmp[3] = {0}; */
-    /*         Value addtmp[3 - 1] = {0}; */
-    /*         nfwd(&n, xs[i], 3, multmp, addtmp, act, ypred); */
+            Value *negygt = valmul(ygt, neg);
+            Value *diff = valadd(yout, negygt);
+            Value *residual = valmul(diff, diff);
 
-    /*         /\* valmul() *\/ */
+            if (j == 0)
+                loss = residual;
+            else
+                loss = valadd(loss, residual);
+        }
+        Value *valbuf[VALCAP] = {0};
+        unsigned int nparam = nparams(&n, valbuf);
+        for (int i = 0; i < nparam; i++)
+            valbuf[i]->grad = 0.0;
 
-    /*     } */
-    /* } */
+        valbwd(loss);
+
+        nparam = nparams(&n, valbuf);
+        for (int i = 0; i < nparam; i++)
+            valbuf[i]->val += -0.1 * valbuf[i]->grad;
+
+        printf("loss: %.5f\n", loss->val);
+        /* TODO: fix pretty printer for loss */
+
+
+    }
 
     /* Value *vs[VALCAP] = {0}; */
     /* unsigned int k = nparams(&n, vs); */
