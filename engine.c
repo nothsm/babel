@@ -18,6 +18,9 @@ unsigned int vid;
 extern Value WTTAB[VALCAP];
 extern unsigned int nwt;
 
+extern Neuron NTAB[VALCAP];
+extern unsigned int nn;
+
 void stdbg(unsigned int beg, unsigned int end) {
     for (int i = beg; i < end; i++)
         printf("%d [0x%ld]: %c\n", i, STRTAB + i, STRTAB[i]);
@@ -393,6 +396,9 @@ int main(int argc, char **argv) {
     memset(WTTAB, 0, VALCAP);
     nwt = 0;
 
+    memset(NTAB, 0, VALCAP);
+    nn = 0;
+
     printf("--- valalloc ---\n");
     Value *valloced = valalloc(3);
     printf("%s\n", valshow(valloced + 0));
@@ -477,17 +483,17 @@ int main(int argc, char **argv) {
 
     printf("\n");
     printf("--- Neuron ---\n");
-    Neuron n = {0};
+    Neuron *n = nalloc(1);
     unsigned int nin = 3;
 
-    ninit(&n, nin);
-    printf("%.5f %.5f %.5f\n", n.w[0].val, n.w[1].val, n.w[2].val);
+    ninit(n, nin);
+    printf("%.5f %.5f %.5f\n", n->w[0].val, n->w[1].val, n->w[2].val);
 
     Value x[3] = {0};
     valinit(x, VAL_FLOAT, 2.0, NULL, NULL);
     valinit(x + 1, VAL_FLOAT, 3.0, NULL, NULL);
     valinit(x + 2, VAL_FLOAT, -1.0, NULL, NULL);
-    Value *vret = nfwd(&n, x, nin);
+    Value *vret = nfwd(n, x, nin);
     printf("%s\n", valsexpr(vret));
     valbwd(vret);
     printf("%s\n", valsexpr(vret));
@@ -520,12 +526,12 @@ int main(int argc, char **argv) {
     valinit(ys + 3, VAL_FLOAT, 1.0, NULL, NULL);
 
     printf("\n --- Training neuron... ---\n");
-    for (int i = 0; i < 40; i++) {
+    for (int i = 0; i < 20; i++) {
         /* Value *ypred[4] = {0}; */
         Value *loss = NULL;
         for (int j = 0; j < 4; j++) {
             Value *ygt = ys + j;
-            Value *yout = nfwd(&n, xs[j], 3);
+            Value *yout = nfwd(n, xs[j], 3);
 
             Value *neg = valalloc(1);
             neg->op = VAL_FLOAT;
@@ -544,13 +550,13 @@ int main(int argc, char **argv) {
                 loss = valadd(loss, residual);
         }
         Value *valbuf[VALCAP] = {0};
-        unsigned int nparam = nparams(&n, valbuf);
+        unsigned int nparam = nparams(n, valbuf);
         for (int i = 0; i < nparam; i++)
             valbuf[i]->grad = 0.0;
 
         valbwd(loss);
 
-        nparam = nparams(&n, valbuf);
+        nparam = nparams(n, valbuf);
         for (int i = 0; i < nparam; i++)
             valbuf[i]->val += -0.1 * valbuf[i]->grad;
 

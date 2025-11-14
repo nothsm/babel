@@ -8,6 +8,9 @@
 Value WTTAB[VALCAP];
 unsigned int nwt;
 
+Neuron NTAB[VALCAP];
+unsigned int nn;
+
 extern char STRTAB[STRCAP];
 extern unsigned int allocated;
 
@@ -20,6 +23,15 @@ double uniform(int lo, int hi) {
 void ncheck(Neuron *n) {
     assert(n != NULL);
     assert(n->nin > 0);
+}
+
+Neuron *nalloc(unsigned int n) {
+    assert(nn + n < VALCAP);
+
+    Neuron *ret = NTAB + nn;
+    nn += n;
+
+    return ret;
 }
 
 void ninit(Neuron *n, unsigned int nin) {
@@ -118,4 +130,13 @@ unsigned int nparams(Neuron *n, Value **ret) {
     ret[n->nin] = &(n->b);
 
     return n->nin + 1;
+}
+
+/* TODO */
+void linit(Layer *l, unsigned int nin, unsigned int nout) {
+    assert(l != NULL);
+
+    l->nin = nin;
+    l->nout = nout;
+
 }

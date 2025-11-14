@@ -123,11 +123,25 @@ typedef struct {
     unsigned int nin;
 } Neuron;
 
-void ncheck(Neuron *n);
+typedef struct {
+  Neuron *ns;
+  unsigned int nin;
+  unsigned int nout;
+} Layer;
+
 void ninit(Neuron *n, unsigned int nin);
+Neuron *nalloc(unsigned int n);
+void ncheck(Neuron *n);
 char *nshow(Neuron *n);
 Value *nfwd(Neuron *n, Value *x, unsigned int nin);
 unsigned int nparams(Neuron *n, Value **ret);
+
+/* TODO: Implement these */
+void lcheck(Layer *l);
+void linit(Layer *l, unsigned int nin, unsigned int nout);
+char *lshow(Layer *l);
+Value **lfwd(Layer *l, Value *x, unsigned int nin);
+unsigned int lparams(Layer *l, Value **ret);
 
 /* typedef struct { */
 /*   unsigned int *dims; */
@@ -140,60 +154,6 @@ typedef struct {
   unsigned int ndims;
   float *buf;
 } Matrix;
-
-typedef struct {
-  unsigned int foo;
-} BanditEnv;
-
-typedef struct {
-  unsigned int *actions[2]; /* list of pairs */
-  unsigned int nactions;
-  unsigned int *xmoves[2];
-  unsigned int nxmoves;
-  unsigned int *omoves[2];
-  unsigned int nomoves;
-  unsigned int step;
-  unsigned int sample;
-  unsigned int reset;
-  unsigned int makenew;
-} TicEnv;
-
-typedef struct {
-  unsigned int foo;
-} TSPEnv;
-
-typedef struct {
-  unsigned int foo;
-} SudokuEnv;
-
-typedef struct {
-  unsigned int foo;
-} SynthesisEnv;
-
-typedef struct {
-  void *env;
-  unsigned int get_action;
-  unsigned int update;
-} EpsGreedyAgent;
-
-typedef struct {
-  unsigned int foo;
-} UCBAgent;
-
-typedef struct {
-  unsigned int foo;
-} GradBanditAgent;
-
-typedef struct {
-  unsigned int foo;
-} MCTSAgent;
-
-/*
- * - simulated annealing
- * - evolutionary algorithms
- * - NEAT
- * - genetic algorithms
- */
 
 char *bopshow(BinOp *);
 char *eshow(Expr *);
