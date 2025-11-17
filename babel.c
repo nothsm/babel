@@ -433,27 +433,6 @@ void matmul(Matrix *A, Matrix *B, Matrix *C) {
     }
 }
 
-TicEnv *ticnew() {
-   return NULL;
-   /* TODO */
-}
-
-void ticprint() {
-    /* TODO */
-}
-
-void ticinit() {
-    /* TODO */
-}
-
-void ticsample() {
-    /* TODO */
-}
-
-void ticstep() {
-    /* TODO */
-}
-
 /* TODO: use proper powers here */
 float distance(float x[2], float y[2]) {
     return sqrt(pow(x[0] - y[0], 2.0) + pow(x[1] - y[1], 2.0));
