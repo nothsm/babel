@@ -93,6 +93,28 @@ Value *valinit(Value *v, ValueType op, float val, Value *prev1, Value *prev2) {
     return v;
 }
 
+bool valeq(Value *v1, Value *v2) {
+    valcheck(v1);
+    valcheck(v2);
+
+    bool is_op_eq = v1->op == v2->op;
+    bool is_val_eq = v1->val == v2->val;
+    bool is_grad_eq = v1->grad == v2->grad;
+
+    bool is_prev1_eq = (v1->prev1 == NULL && v2->prev1 == NULL)
+                       || (v1->prev1 != NULL && v2->prev1 != NULL
+                           && valeq(v1->prev1, v2->prev1));
+    bool is_prev2_eq = (v1->prev2 == NULL && v2->prev2 == NULL)
+                       || (v1->prev2 != NULL && v2->prev2 != NULL
+                           && valeq(v1->prev2, v2->prev2));
+
+    return is_op_eq
+           && is_val_eq
+           && is_grad_eq
+           && is_prev1_eq
+           && is_prev2_eq;
+}
+
 char *vtshow(ValueType vt) {
     int n;
     unsigned int old_allocated = allocated;

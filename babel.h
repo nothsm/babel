@@ -115,6 +115,7 @@ void engineinit(void);
 Value *valinit(Value *, ValueType, float, Value *, Value *);
 Value *valalloc(unsigned int n);
 void valcheck(Value *);
+bool valeq(Value *, Value *);
 char *valshow(Value *);
 char *valsexpr(Value *);
 Value *valmul(Value *, Value *);
