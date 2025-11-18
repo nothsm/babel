@@ -110,12 +110,17 @@ struct Value {
     Value *prev2;
 };
 
-Value *valinit(Value *v, ValueType op, float val, Value *prev1, Value *prev2);
+void engineinit(void);
+
+Value *valinit(Value *, ValueType, float, Value *, Value *);
+Value *valalloc(unsigned int n);
 void valcheck(Value *);
 char *valshow(Value *);
-Value *valmul(Value *x, Value *y);
-Value *valadd(Value *x, Value *y);
-Value *valtanh(Value *x);
+char *valsexpr(Value *);
+Value *valmul(Value *, Value *);
+Value *valadd(Value *, Value *);
+Value *valtanh(Value *);
+void valbwd(Value *);
 
 typedef struct {
     Value *w;
