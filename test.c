@@ -7,43 +7,36 @@
 #define EPS 0.000001
 /* #define EPS 0.00000000000001 */
 
-void valalloc_simple(void);
-void valbwd_simple(void);
+void valalloc_basic(void);
+void valinit_basic(void);
+void valbwd_basic(void);
 void valbwd_tanh(void);
-void valeq_simple(void);
+void valeq_basic(void);
+
+void nfwd_basic(void);
+
+void lfwd_basic(void);
 
 int main(int argc, char *argv[]) {
     engineinit();
 
-    valalloc_simple();
-    valbwd_simple();
+    valalloc_basic();
+    valinit_basic();
+    valbwd_basic();
     valbwd_tanh();
-    valeq_simple();
+    valeq_basic();
 
-    Layer l = {0};
-    linit(&l, 3, 3);
+    nfwd_basic();
+
+    lfwd_basic();
 }
 
 bool feq(float x, float y) {
     return fabs(x - y) < EPS;
 }
 
-/* TODO: extend this */
-void valeq_simple() {
-    test("valeq_simple");
-
-    Value v1, v2;
-
-    valinit(&v1, VAL_FLOAT, 2.0, NULL, NULL);
-    valinit(&v2, VAL_FLOAT, 2.0, NULL, NULL);
-    if (!valeq(&v1, &v2))
-        error("valeq_simple: values should be the same");
-
-    pass("");
-}
-
-void valalloc_simple() {
-    test("valalloc_simple");
+void valalloc_basic() {
+    test("valalloc_basic");
 
     Value vzero = {0};
     valinit(&vzero, VAL_FLOAT, 0.0, NULL, NULL);
@@ -53,13 +46,74 @@ void valalloc_simple() {
     Value *valloced = valalloc(n);
     for (int i = 0; i < n; i++)
         if (!valeq(&vzero, valloced + i))
-            error("valalloc_simple: value should be zeroed");
+            error("valalloc_basic: value should be zeroed");
 
     pass("");
 }
 
-void valbwd_simple() {
-    test("valbwd_simple");
+void valinit_basic() {
+    test("valinit_basic");
+
+    Value v1 = {0};
+    Value v2 = {0};
+    Value v3 = {0};
+
+    valinit(&v1, VAL_FLOAT, 1.0, NULL, NULL);
+    valinit(&v2, VAL_FLOAT, 2.0, NULL, NULL);
+    valinit(&v3, VAL_ADD, 3.0, &v1, &v2);
+
+    if (v1.op != VAL_FLOAT)
+        error("valinit_basic: bad initialization");
+    if (v1.val != 1.0)
+        error("valinit_basic: bad initialization");
+    if (v1.grad != 0.0)
+        error("valinit_basic: bad initialization");
+    if (v1.prev1 != NULL)
+        error("valinit_basic: bad initialization");
+    if (v1.prev2 != NULL)
+        error("valinit_basic: bad initialization");
+
+    if (v2.op != VAL_FLOAT)
+        error("valinit_basic: bad initialization");
+    if (v2.val != 2.0)
+        error("valinit_basic: bad initialization");
+    if (v2.grad != 0.0)
+        error("valinit_basic: bad initialization");
+    if (v2.prev1 != NULL)
+        error("valinit_basic: bad initialization");
+    if (v2.prev2 != NULL)
+        error("valinit_basic: bad initialization");
+
+    if (v3.op != VAL_ADD)
+        error("valinit_basic: bad initialization");
+    if (v3.val != 3.0)
+        error("valinit_basic: bad initialization");
+    if (v3.grad != 0.0)
+        error("valinit_basic: bad initialization");
+    if (v3.prev1 != &v1)
+        error("valinit_basic: bad initialization");
+    if (v3.prev2 != &v2)
+        error("valinit_basic: bad initialization");
+
+    pass("");
+}
+
+/* TODO: extend this */
+void valeq_basic() {
+    test("valeq_basic");
+
+    Value v1, v2;
+
+    valinit(&v1, VAL_FLOAT, 2.0, NULL, NULL);
+    valinit(&v2, VAL_FLOAT, 2.0, NULL, NULL);
+    if (!valeq(&v1, &v2))
+        error("valeq_basic: values should be the same");
+
+    pass("");
+}
+
+void valbwd_basic() {
+    test("valbwd_basic");
 
     Value a = {0};
     Value b = {0};
@@ -78,19 +132,19 @@ void valbwd_simple() {
 
     /* TODO: is there a better way to do these? */
     if (!feq(a.grad, 6.0))
-        error("valbwd_simple: gradient is incorrect (is %f, should be %f)", a.grad, 6.0);
+        error("valbwd_basic: gradient is incorrect (is %f, should be %f)", a.grad, 6.0);
     if (!feq(b.grad, -4.0))
-        error("valbwd_simple: gradient is incorrect (is %f, should be %f)", b.grad, -4.0);
+        error("valbwd_basic: gradient is incorrect (is %f, should be %f)", b.grad, -4.0);
     if (!feq(c.grad, -2.0))
-        error("valbwd_simple: gradient is incorrect (is %f, should be %f)", c.grad, -2.0);
+        error("valbwd_basic: gradient is incorrect (is %f, should be %f)", c.grad, -2.0);
     if (!feq(d->grad, -2.0))
-        error("valbwd_simple: gradient is incorrect (is %f, should be %f)", d->grad, -2.0);
+        error("valbwd_basic: gradient is incorrect (is %f, should be %f)", d->grad, -2.0);
     if (!feq(e->grad, -2.0))
-        error("valbwd_simple: gradient is incorrect (is %f, should be %f)", e->grad, -2.0);
+        error("valbwd_basic: gradient is incorrect (is %f, should be %f)", e->grad, -2.0);
     if (!feq(f.grad, 4.0))
-        error("valbwd_simple: gradient is incorrect (is %f, should be %f)", f.grad, 4.0);
+        error("valbwd_basic: gradient is incorrect (is %f, should be %f)", f.grad, 4.0);
     if (!feq(L->grad, 1.0))
-        error("valbwd_simple: gradient is incorrect (is %f, should be %f)", L->grad, 1.0);
+        error("valbwd_basic: gradient is incorrect (is %f, should be %f)", L->grad, 1.0);
 
     pass("");
 }
@@ -137,6 +191,37 @@ void valbwd_tanh() {
         error("valbwd_tanh: gradient is incorrect (is %f, should be %f)", n->grad, 0.5);
     if (!feq(o->grad, 1.0))
         error("valbwd_tanh: gradient is incorrect (is %f, should be %f)", o->grad, 1.0);
+
+    pass("");
+}
+
+void nfwd_basic() {
+    test("nfwd_basic");
+
+    Neuron n = {0};
+
+    error("nfwd_basic: test not implemented");
+
+    pass("");
+}
+
+/* TODO */
+void lfwd_basic() {
+    test("lfwd_basic");
+
+    Layer l = {0};
+    unsigned int nin = 3;
+    unsigned int nout = 2;
+    linit(&l, nin, nout);
+
+    Value x[3] = {0};
+    valinit(x + 0, VAL_FLOAT, 2.0, NULL, NULL);
+    valinit(x + 1, VAL_FLOAT, 3.0, NULL, NULL);
+    valinit(x + 2, VAL_FLOAT, -1.0, NULL, NULL);
+
+    Value **out = lfwd(&l, x);
+
+    error("lfwd_basic: test not implemented");
 
     pass("");
 }

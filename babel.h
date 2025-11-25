@@ -146,7 +146,7 @@ unsigned int nparams(Neuron *n, Value **ret);
 void linit(Layer *l, unsigned int nin, unsigned int nout);
 void lassert(Layer *l);
 char *lshow(Layer *l);
-Value **lfwd(Layer *l, Value *x, unsigned int nin);
+Value **lfwd(Layer *l, Value *x);
 unsigned int lparams(Layer *l, Value **ret);
 
 /* typedef struct { */
