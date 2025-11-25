@@ -85,6 +85,8 @@ struct Expr {
 #define REC_EXPR(v)   ((Expr){.tag = EXPR_REC,   {.rec = v}})
 #define BINOP_EXPR(v) ((Expr){.tag = EXPR_BINOP, {.binop = v}})
 
+/* --------------------------------- engine.c ---------------------------------- */
+
 typedef struct {
     Expr        *buf;
     unsigned int len;
@@ -112,6 +114,8 @@ struct Value {
 
 void engineinit(void);
 
+void stdbg(unsigned int, unsigned int);
+
 Value *valinit(Value *, ValueType, float, Value *, Value *);
 Value *valalloc(unsigned int n);
 void valassert(Value *);
@@ -122,6 +126,9 @@ Value *valmul(Value *, Value *);
 Value *valadd(Value *, Value *);
 Value *valtanh(Value *);
 void valbwd(Value *);
+
+
+/* ----------------------------------- nn.c ------------------------------------ */
 
 typedef struct {
     Value *w;

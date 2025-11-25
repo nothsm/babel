@@ -23,9 +23,10 @@ extern unsigned int nn;
 
 void stdbg(unsigned int beg, unsigned int end) {
     for (int i = beg; i < end; i++)
-        printf("%d [0x%ld]: %c\n", i, STRTAB + i, STRTAB[i]);
+        printf("%d [%p]: %c\n", i, STRTAB + i, STRTAB[i]);
 }
 
+/* TODO: How do I make sure this is called before any other operation? */
 void engineinit() {
     srand(time(NULL)); /* TODO: use a proper seed */
 
@@ -418,9 +419,11 @@ void valbwd(Value *v) {
     valassert(v);
 }
 
-
 /*
  * TODO
+ * - [ ] Make it easier to construct and forward pass datasets
+ * - [ ] Check valinit id allocations
+ * - [ ] Replace pointers with handles
  * - [ ] Add Raylib visualization
  * - [ ] Add TUI visualization
  * - [ ] Add C compilation

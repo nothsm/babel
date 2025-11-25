@@ -20,6 +20,8 @@ void lfwd_basic(void);
 int main(int argc, char *argv[]) {
     engineinit();
 
+    stdbg(0, 10);
+
     valalloc_basic();
     valinit_basic();
     valbwd_basic();
@@ -212,6 +214,8 @@ void nfwd_basic() {
     Value *out = nfwd(&n, x, nin);
     if (!feq(out->val, -0.6043677771))
         error("nfwd_basic: forward pass incorrect (is %f, should be %f)", out->val, -0.6043677771);
+    if (!feq(out->grad, 0.0))
+        error("nfwd_basic: gradient should be 0 after forward pass");
 
     pass("");
 }
