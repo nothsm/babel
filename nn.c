@@ -135,8 +135,24 @@ unsigned int nparams(Neuron *n, Value **ret) {
 /* TODO */
 void linit(Layer *l, unsigned int nin, unsigned int nout) {
     assert(l != NULL);
+    assert(nin > 0);
+    assert(nout > 0);
+
+    Neuron *ns = nalloc(nout);
+    for (int i = 0; i < nout; i++)
+        ninit(ns + i, nin);
 
     l->nin = nin;
     l->nout = nout;
+    l->ns = ns;
 
+    lassert(l);
+}
+
+void lassert(Layer *l) {
+    assert(l != NULL);
+    assert(l->nin > 0);
+    assert(l->nout > 0);
+    for (int i = 0; i < l->nout; i++)
+        nassert(l->ns + i);
 }

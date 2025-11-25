@@ -19,6 +19,9 @@ int main(int argc, char *argv[]) {
     valbwd_simple();
     valbwd_tanh();
     valeq_simple();
+
+    Layer l = {0};
+    linit(&l, 3, 3);
 }
 
 bool feq(float x, float y) {
