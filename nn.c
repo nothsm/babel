@@ -20,7 +20,7 @@ double uniform(int lo, int hi) {
     return ((hi - lo) * frand()) + lo;
 }
 
-void ncheck(Neuron *n) {
+void nassert(Neuron *n) {
     assert(n != NULL);
     assert(n->nin > 0);
 }
@@ -52,7 +52,7 @@ void ninit(Neuron *n, unsigned int nin) {
     n->b = b;
     n->nin = nin;
 
-    ncheck(n);
+    nassert(n);
 }
 
 /* TODO: generalize this to > 2 input dims */
@@ -62,7 +62,7 @@ char *nshow(Neuron *n) {
     char *s;
 
     assert(n->nin >= 2);
-    ncheck(n);
+    nassert(n);
 
     oldalloc = allocated;
 
@@ -79,11 +79,11 @@ char *nshow(Neuron *n) {
 /* len(addtmp) = nin - 1 (these bounds are wrong) */
 /* TODO: support bias */
 Value *nfwd(Neuron *n, Value *x, unsigned int nin) {
-    ncheck(n);
+    nassert(n);
     assert(nin == n->nin);
     assert(nin > 0);
     for (int i = 0; i < nin; i++)
-        valcheck(x + i);
+        valassert(x + i);
 
     /* TODO: These take up wayyyyy too much space */
     Value *multmp[VALCAP] = {0};
@@ -114,15 +114,15 @@ Value *nfwd(Neuron *n, Value *x, unsigned int nin) {
     }
     Value *ret = valtanh(act);
 
-    ncheck(n);
-    valcheck(act);
-    valcheck(ret);
+    nassert(n);
+    valassert(act);
+    valassert(ret);
 
     return ret;
 }
 
 unsigned int nparams(Neuron *n, Value **ret) {
-    ncheck(n);
+    nassert(n);
     assert(ret != NULL);
 
     for (int i = 0; i < n->nin; i++)

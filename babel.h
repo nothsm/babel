@@ -114,7 +114,7 @@ void engineinit(void);
 
 Value *valinit(Value *, ValueType, float, Value *, Value *);
 Value *valalloc(unsigned int n);
-void valcheck(Value *);
+void valassert(Value *);
 bool valeq(Value *, Value *);
 char *valshow(Value *);
 char *valsexpr(Value *);
@@ -137,14 +137,14 @@ typedef struct {
 
 void ninit(Neuron *n, unsigned int nin);
 Neuron *nalloc(unsigned int n);
-void ncheck(Neuron *n);
+void nassert(Neuron *n);
 char *nshow(Neuron *n);
 Value *nfwd(Neuron *n, Value *x, unsigned int nin);
 unsigned int nparams(Neuron *n, Value **ret);
 
 /* TODO: Implement these */
-void lcheck(Layer *l);
 void linit(Layer *l, unsigned int nin, unsigned int nout);
+void lassert(Layer *l);
 char *lshow(Layer *l);
 Value **lfwd(Layer *l, Value *x, unsigned int nin);
 unsigned int lparams(Layer *l, Value **ret);
