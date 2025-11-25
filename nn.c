@@ -157,13 +157,14 @@ void lassert(Layer *l) {
         nassert(l->ns + i);
 }
 
-Value **lfwd(Layer *l, Value *x) {
+unsigned int lfwd(Layer *l, Value *x, Value **ret) {
     lassert(l);
     for (int i = 0; i < l->nin; i++)
         valassert(x + i);
 
-    for (int i = 0; i < l->nout; i++)
+    int i;
+    for (i = 0; i < l->nout; i++)
         nfwd(l->ns + i, x, l->nin);
 
-    return NULL;
+    return i;
 }

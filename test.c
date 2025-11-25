@@ -199,8 +199,19 @@ void nfwd_basic() {
     test("nfwd_basic");
 
     Neuron n = {0};
+    unsigned int nin = 3;
+    ninit(&n, nin);
+    for (int i = 0; i < nin; i++)
+        valinit(n.w + i, VAL_FLOAT, pow(-1, i) * (i + 1.0) / 10.0, NULL, NULL);
 
-    error("nfwd_basic: test not implemented");
+    Value x[3] = {0};
+    valinit(x + 0, VAL_FLOAT, 2.0, NULL, NULL);
+    valinit(x + 1, VAL_FLOAT, 3.0, NULL, NULL);
+    valinit(x + 2, VAL_FLOAT, -1.0, NULL, NULL);
+
+    Value *out = nfwd(&n, x, nin);
+    if (!feq(out->val, -0.6043677771))
+        error("nfwd_basic: forward pass incorrect (is %f, should be %f)", out->val, -0.6043677771);
 
     pass("");
 }
@@ -219,7 +230,8 @@ void lfwd_basic() {
     valinit(x + 1, VAL_FLOAT, 3.0, NULL, NULL);
     valinit(x + 2, VAL_FLOAT, -1.0, NULL, NULL);
 
-    Value **out = lfwd(&l, x);
+    Value *ret[2] = {0};
+    unsigned int n = lfwd(&l, x, ret);
 
     error("lfwd_basic: test not implemented");
 
