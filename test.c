@@ -20,8 +20,6 @@ void lfwd_basic(void);
 int main(int argc, char *argv[]) {
     engineinit();
 
-    stdbg(0, 10);
-
     valalloc_basic();
     valinit_basic();
     valbwd_basic();
@@ -202,7 +200,9 @@ void nfwd_basic() {
 
     Neuron n = {0};
     unsigned int nin = 3;
+
     ninit(&n, nin);
+
     for (int i = 0; i < nin; i++)
         valinit(n.w + i, VAL_FLOAT, pow(-1, i) * (i + 1.0) / 10.0, NULL, NULL);
 
@@ -229,15 +229,27 @@ void lfwd_basic() {
     unsigned int nout = 2;
     linit(&l, nin, nout);
 
+    /* initialize first neuron to [0.1, -0.2, 0.3] */
+    for (int i = 0; i < nin; i++)
+        valinit(l.ns[0].w + i, VAL_FLOAT, pow(-1, i) * (i + 1.0) / 10.0, NULL, NULL);
+    
+    /* initialize second neuron to [-0.1, 0.2, -0.3] */
+    for (int i = 0; i < nin; i++)
+        valinit(l.ns[1].w + i, VAL_FLOAT, pow(-1, (i + 1)) * (i + 1.0) / 10.0, NULL, NULL);
+ 
+
     Value x[3] = {0};
     valinit(x + 0, VAL_FLOAT, 2.0, NULL, NULL);
     valinit(x + 1, VAL_FLOAT, 3.0, NULL, NULL);
     valinit(x + 2, VAL_FLOAT, -1.0, NULL, NULL);
 
-    Value *ret[2] = {0};
-    unsigned int n = lfwd(&l, x, ret);
+    Value *out[2] = {0};
+    lfwd(&l, x, out);
 
-    error("lfwd_basic: test not implemented");
+    if (!feq(out[0]->val, -0.6043677771))
+        error("lfwd_basic: forward pass incorrect (is %f, should be %f)", out[0]->val, -0.6043677771);
+    if (!feq(out[1]->val, 0.6043677771))
+        error("lfwd_basic: forward pass incorrect (is %f, should be %f)", out[0]->val, 0.6043677771);
 
     pass("");
 }

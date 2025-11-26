@@ -100,6 +100,7 @@ bool valeq(Value *v1, Value *v2) {
     bool is_val_eq = v1->val == v2->val;
     bool is_grad_eq = v1->grad == v2->grad;
 
+    /* TODO: Cleanup this messiness */
     bool is_prev1_eq = (v1->prev1 == NULL && v2->prev1 == NULL)
                        || (v1->prev1 != NULL && v2->prev1 != NULL
                            && valeq(v1->prev1, v2->prev1));

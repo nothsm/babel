@@ -164,7 +164,7 @@ unsigned int lfwd(Layer *l, Value *x, Value **ret) {
 
     int i;
     for (i = 0; i < l->nout; i++)
-        nfwd(l->ns + i, x, l->nin);
+        ret[i] = nfwd(l->ns + i, x, l->nin);
 
     return i;
 }
