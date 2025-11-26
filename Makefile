@@ -29,13 +29,13 @@ test: engine.c nn.c babel.h test.c test.h
 	clang -g -Wall -Wconversion --std=c99 -o test test.c engine.c nn.c
 
 clean:
-	rm -f babel;              \
-	rm -rf babel.dSYM;        \
-	rm -f babel-leaks;        \
-	rm -rf babel-leaks.dSYM;  \
-	rm -f main;             \
-	rm -rf main.dSYM;       \
+	rm -f babel;                \
+	rm -rf babel.dSYM;          \
+	rm -f babel-leaks;          \
+	rm -rf babel-leaks.dSYM;    \
+	rm -f main;                 \
+	rm -rf main.dSYM;           \
 	rm -f main-leakcheck;       \
 	rm -rf main-leakcheck.dSYM; \
-	rm -f test;               \
+	rm -f test;                 \
 	rm -rf test.dSYM;

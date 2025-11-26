@@ -100,7 +100,7 @@ bool valeq(Value *v1, Value *v2) {
     bool is_val_eq = v1->val == v2->val;
     bool is_grad_eq = v1->grad == v2->grad;
 
-    /* TODO: Cleanup this messiness */
+    /* TODO: Cleanup this kludge */
     bool is_prev1_eq = (v1->prev1 == NULL && v2->prev1 == NULL)
                        || (v1->prev1 != NULL && v2->prev1 != NULL
                            && valeq(v1->prev1, v2->prev1));
@@ -159,6 +159,7 @@ char *vtshow(ValueType vt) {
 
 /* TODO: I should cache the results of this */
 /* TODO: Handle self-references properly? */
+/* TODO: Fix this kludge */
 char *valshow(Value *v) {
     int n;
     unsigned int old_allocated;
@@ -223,6 +224,7 @@ char *valshow(Value *v) {
         assert(false);
 }
 
+/* TODO: Fix this kludge */
 char *valsexpr(Value *v) {
     int n;
     unsigned int old_allocated;
@@ -352,8 +354,6 @@ void valtanhbwd(Value *v) {
     valassert(v);
     assert(v->op == VAL_TANH);
     assert(v->prev2 == NULL);
-
-    /* assert(false); */
 
     float t = v->val;
 

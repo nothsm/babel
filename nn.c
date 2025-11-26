@@ -78,6 +78,7 @@ char *nshow(Neuron *n) {
 /* len(multmp) = nin */
 /* len(addtmp) = nin - 1 (these bounds are wrong) */
 /* TODO: support bias */
+/* TODO: Fix this kludge */
 Value *nfwd(Neuron *n, Value *x, unsigned int nin) {
     nassert(n);
     assert(nin == n->nin);
@@ -85,7 +86,7 @@ Value *nfwd(Neuron *n, Value *x, unsigned int nin) {
     for (int i = 0; i < nin; i++)
         valassert(x + i);
 
-    /* TODO: These take up wayyyyy too much space */
+    /* TODO: These allocate too much memory */
     Value *multmp[VALCAP] = {0};
     Value *addtmp[VALCAP] = {0};
 
