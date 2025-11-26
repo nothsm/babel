@@ -166,5 +166,8 @@ unsigned int lfwd(Layer *l, Value *x, Value **ret) {
     for (i = 0; i < l->nout; i++)
         ret[i] = nfwd(l->ns + i, x, l->nin);
 
+    for (int j = 0; j < i; j++)
+        valassert(ret[j]);
+
     return i;
 }
