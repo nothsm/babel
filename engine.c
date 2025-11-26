@@ -57,8 +57,6 @@ void valassert(Value *v) {
     assert(v->id < vid);
 }
 
-/* TODO: When should I allocate id's, if anytime? */
-
 Value *valalloc(unsigned int n) {
     assert(vid + n <= VALCAP);
 
@@ -361,7 +359,7 @@ void valtanhbwd(Value *v) {
     assert(v->op == VAL_TANH);
     assert(v->prev2 == NULL);
 
-    v->prev1->grad += v->grad * (1 - (v->val * v->val)); /* dL/dvprev * dL/dv * dv/dvprev */
+    v->prev1->grad += v->grad * (1 - (v->val * v->val));
 
     valassert(v);
 }
@@ -445,6 +443,8 @@ void valbwd(Value *v) {
  * - [ ] Fix main.c
  * - [ ] Allow custom allocators
  * - [ ] Add tests to verify id allocation
+ * - [ ] If you put these operations in a training loop, you don't want to allocate new memory on each iteration...
+ * - [ ] Test neuron training
  * - [ ] Systems-level performance optimization
  *   - [ ] DoD
  *   - [ ] Pooled arena allocation
