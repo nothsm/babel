@@ -432,6 +432,8 @@ void valbwd(Value *v) {
  * - [ ] Add Python bindings
  * - [ ] Add Racket/Scheme bindings
  * - [ ] Setup tests
+ * - [ ] Use C for building (copy Tsoding or Casey Muratori)
+ * - [ ] Fix warnings
  * - [ ] Systems-level performance optimization
  *   - [ ] DoD
  *   - [ ] Pooled arena allocation

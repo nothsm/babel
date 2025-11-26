@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include "babel.h"
@@ -16,6 +17,7 @@ void valeq_basic(void);
 void nfwd_basic(void);
 
 void lfwd_basic(void);
+void lparams_basic(void);
 
 int main(int argc, char *argv[]) {
     engineinit();
@@ -29,6 +31,7 @@ int main(int argc, char *argv[]) {
     nfwd_basic();
 
     lfwd_basic();
+    lparams_basic();
 }
 
 bool feq(float x, float y) {
@@ -220,7 +223,6 @@ void nfwd_basic() {
     pass("");
 }
 
-/* TODO */
 void lfwd_basic() {
     test("lfwd_basic");
 
@@ -250,6 +252,46 @@ void lfwd_basic() {
         error("lfwd_basic: forward pass incorrect (is %f, should be %f)", out[0]->val, -0.6043677771);
     if (!feq(out[1]->val, 0.6043677771))
         error("lfwd_basic: forward pass incorrect (is %f, should be %f)", out[0]->val, 0.6043677771);
+
+    pass("");
+}
+
+/* TODO: This doesn't check the bias */
+void lparams_basic() {
+    test("lparams_basic");
+
+    Layer l = {0};
+    unsigned int nin = 3;
+    unsigned int nout = 2;
+
+    linit(&l, nin, nout);
+
+    /* initialize first neuron to [0.1, -0.2, 0.3] */
+    for (int i = 0; i < nin; i++)
+        valinit(l.ns[0].w + i, VAL_FLOAT, pow(-1, i) * (i + 1.0) / 10.0, NULL, NULL);
+ 
+    /* initialize second neuron to [-0.1, 0.2, -0.3] */
+    for (int i = 0; i < nin; i++)
+        valinit(l.ns[1].w + i, VAL_FLOAT, pow(-1, (i + 1)) * (i + 1.0) / 10.0, NULL, NULL);
+
+    Value *ret[VALCAP] = {0};
+    unsigned int n = lparams(&l, ret);
+
+    if (!(n == 8))
+        error("lparams_basic: number of parameters is incorrect (is %d, should be %d)", n, 8);
+
+    if (!feq(ret[0]->val, 0.1))
+        error("lparams_basic: param is incorrect (is %f, should be %f)", ret[0]->val, 0.1);
+    if (!feq(ret[1]->val, -0.2))
+        error("lparams_basic: param is incorrect (is %f, should be %f)", ret[1]->val, -0.2);
+    if (!feq(ret[2]->val, 0.3))
+        error("lparams_basic: param is incorrect (is %f, should be %f)", ret[2]->val, 0.3);
+    if (!feq(ret[4]->val, -0.1))
+        error("lparams_basic: param is incorrect (is %f, should be %f)", ret[3]->val, -0.1);
+    if (!feq(ret[5]->val, 0.2))
+        error("lparams_basic: param is incorrect (is %f, should be %f)", ret[4]->val, 0.2);
+    if (!feq(ret[6]->val, -0.3))
+        error("lparams_basic: param is incorrect (is %f, should be %f)", ret[5]->val, -0.3);
 
     pass("");
 }

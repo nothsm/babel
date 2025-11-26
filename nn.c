@@ -172,3 +172,14 @@ unsigned int lfwd(Layer *l, Value *x, Value **ret) {
 
     return i;
 }
+
+unsigned int lparams(Layer *l, Value **ret) {
+    lassert(l);
+    assert(ret != NULL);
+
+    unsigned int n = 0;
+    for (int i = 0; i < l->nout; i++)
+        n += nparams(l->ns + i, ret + n);
+
+    return n;
+}
