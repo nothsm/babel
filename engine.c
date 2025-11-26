@@ -15,9 +15,6 @@ unsigned int allocated;
 Value VALTAB[VALCAP];
 unsigned int vid;
 
-extern Value WTTAB[VALCAP];
-extern unsigned int nwt;
-
 extern Neuron NTAB[VALCAP];
 extern unsigned int nn;
 
@@ -35,9 +32,6 @@ void engineinit() {
 
     memset(VALTAB, 0, VALCAP);
     vid = 0;
-
-    memset(WTTAB, 0, VALCAP);
-    nwt = 0;
 
     memset(NTAB, 0, VALCAP);
     nn = 0;
@@ -57,14 +51,21 @@ void valassert(Value *v) {
     assert(v->id < vid);
 }
 
+/* TODO: When should I allocate id's, if anytime? */
+
 Value *valalloc(unsigned int n) {
     assert(vid + n <= VALCAP);
 
     unsigned int oldvid = vid;
 
     Value *ret = VALTAB + vid;
-    for (int i = 0; i < n; i++)
-        valinit(VALTAB + vid, VAL_FLOAT, 0.0, NULL, NULL);
+    for (int i = 0; i < n; i++) {
+        Value *v = VALTAB + vid;
+
+        memset(v, 0, sizeof(*v));
+        v->id = vid;
+        vid += 1;
+    }
 
     assert(ret->id == oldvid);
     for (int i = 0; i < n; i++)
@@ -78,9 +79,9 @@ Value *valalloc(unsigned int n) {
 Value *valinit(Value *v, ValueType op, float val, Value *prev1, Value *prev2) {
     assert(prev1 != v);
     assert(prev2 != v);
-    assert(vid < VALCAP);
+    // assert(vid < VALCAP);
 
-    v->id = vid++;
+    // v->id = vid++;
     v->op = op;
     v->val = val;
     v->grad = 0.0;
@@ -357,7 +358,7 @@ void valtanhbwd(Value *v) {
 
     float t = v->val;
 
-    v->prev1->grad += v->grad * (1 - (t * t)); /* TODO */
+    v->prev1->grad += v->grad * (1 - (t * t));
 
     valassert(v);
 }

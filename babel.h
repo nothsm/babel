@@ -17,6 +17,7 @@
 #define ARRCAP 1024 /* TODO: decrease this */
 #define STRCAP (1024 * 32)
 #define VALCAP 2048 /* TODO: decrease this */
+#define NEURCAP 128
 #define RECLIM 32
 #define MAXPROGRAMS (32 * 1024 * 1024) /* 8MB limit... TODO: decrease this */
 #define NGROW 32
@@ -95,6 +96,7 @@ typedef struct {
 
 typedef struct Value Value;
 
+/* TODO: add noop? */
 typedef enum {
     VAL_ADD,
     VAL_MUL,
@@ -131,8 +133,8 @@ void valbwd(Value *);
 /* ----------------------------------- nn.c ------------------------------------ */
 
 typedef struct {
-    Value *w;
-    Value b;
+    Value *w; /* array of Value's of size nin */
+    Value *b; /* single Value */
     unsigned int nin;
 } Neuron;
 
@@ -142,8 +144,8 @@ typedef struct {
   unsigned int nout;
 } Layer;
 
-void ninit(Neuron *n, unsigned int nin);
-Neuron *nalloc(unsigned int n);
+void ninit(Neuron *n);
+Neuron *nalloc(unsigned int n, unsigned int nin);
 void nassert(Neuron *n);
 char *nshow(Neuron *n);
 Value *nfwd(Neuron *n, Value *x, unsigned int nin);

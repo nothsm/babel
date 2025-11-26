@@ -5,10 +5,7 @@
 
 #define frand() ((double) rand() / (RAND_MAX + 1.0))
 
-Value WTTAB[VALCAP];
-unsigned int nwt;
-
-Neuron NTAB[VALCAP];
+Neuron NTAB[NEURCAP];
 unsigned int nn;
 
 extern char STRTAB[STRCAP];
@@ -25,32 +22,29 @@ void nassert(Neuron *n) {
     assert(n->nin > 0);
 }
 
-Neuron *nalloc(unsigned int n) {
-    assert(nn + n < VALCAP);
+/* TODO: This should also allocate weights */
+Neuron *nalloc(unsigned int n, unsigned int nin) {
+    assert(nn + n <= NEURCAP);
 
     Neuron *ret = NTAB + nn;
     nn += n;
 
+    for (int i = 0; i < n; i++) {
+        /* TODO: allocate w, b as a single array? */
+        ret[i].w = valalloc(nin);
+        ret[i].b = valalloc(1);
+        ret[i].nin = nin;
+    }
+
     return ret;
 }
 
-void ninit(Neuron *n, unsigned int nin) {
-    Value *w;
-    Value b;
-    int i;
+void ninit(Neuron *n) {
+    assert(n != NULL);
 
-    assert(nwt + nin <= VALCAP);
-
-    w = WTTAB + nwt;
-    valinit(&b, VAL_FLOAT, uniform(-1, 1), NULL, NULL);
-
-    for (i = nwt; i < nwt + nin; i++)
-        valinit(WTTAB + i, VAL_FLOAT, uniform(-1, 1), NULL, NULL);
-    nwt = i;
-
-    n->w = w;
-    n->b = b;
-    n->nin = nin;
+    for (int i = 0; i < n->nin; i++)
+        valinit(n->w + i, VAL_FLOAT, uniform(-1, 1), NULL, NULL);
+    valinit(n->b, VAL_FLOAT, uniform(-1, 1), NULL, NULL);
 
     nassert(n);
 }
@@ -66,7 +60,7 @@ char *nshow(Neuron *n) {
 
     oldalloc = allocated;
 
-    nalloc = snprintf(STRTAB + allocated, STRCAP, "Neuron(w=[%.3f, %.3f], b=%.3f, nin=%d)", n->w[0].val, n->w[1].val, n->b.val, n->nin); /* TODO: refactor global strtable printing */
+    nalloc = snprintf(STRTAB + allocated, STRCAP, "Neuron(w=[%.3f, %.3f], b=%.3f, nin=%d)", n->w[0].val, n->w[1].val, n->b->val, n->nin); /* TODO: refactor global strtable printing */
     assert(nalloc >= 0);
     assert(allocated + nalloc + 1 < STRCAP);
     allocated += nalloc + 1;
@@ -139,9 +133,9 @@ void linit(Layer *l, unsigned int nin, unsigned int nout) {
     assert(nin > 0);
     assert(nout > 0);
 
-    Neuron *ns = nalloc(nout);
+    Neuron *ns = nalloc(nout, nin);
     for (int i = 0; i < nout; i++)
-        ninit(ns + i, nin);
+        ninit(ns + i);
 
     l->nin = nin;
     l->nout = nout;
