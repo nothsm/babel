@@ -25,7 +25,6 @@ void nassert(Neuron *n) {
     assert(n->nin > 0);
 }
 
-/* TODO: This should also allocate weights */
 Neuron *nalloc(unsigned int n, unsigned int nin) {
     assert(nneur + n <= NEURCAP);
 
@@ -71,52 +70,25 @@ char *nshow(Neuron *n) {
     return STRTAB + oldalloc;
 }
 
-/* last addition is put into act */
-/* len(multmp) = nin */
-/* len(addtmp) = nin - 1 (these bounds are wrong) */
+/* pre: len(x) == n->nin (you can't assert this, though) */
 /* TODO: support bias */
-/* TODO: Fix this kludge */
-Value *nfwd(Neuron *n, Value *x, unsigned int nin) {
+Value *nfwd(Neuron *n, Value *x) {
     nassert(n);
-    assert(nin == n->nin);
-    assert(nin > 0);
-    for (int i = 0; i < nin; i++)
+    for (int i = 0; i < n->nin; i++)
         valassert(x + i);
 
-    /* TODO: These allocate too much memory */
-    Value *multmp[VALCAP] = {0};
-    Value *addtmp[VALCAP] = {0};
+    Value *out = valalloc(1);
 
-    Value *w = n->w;
+    valinit(out, VAL_FLOAT, 0.0, NULL, NULL);
 
-    Value *act = NULL;
-    if (nin == 1) {
-        assert(false);
-
-        act = valmul(x + 0, w + 0);
-    } else if (nin == 2) {
-        for (int i = 0; i < nin; i++)
-            multmp[i] = valmul(x + i, w + i);
-
-        act = valadd(multmp[0], multmp[1]);
-    } else {
-        assert(nin >= 3);
-
-        for (int i = 0; i < nin; i++)
-            multmp[i] = valmul(x + i, w + i);
-
-        addtmp[0] = valadd(multmp[0], multmp[1]);
-        for (int i = 0; i < nin - 2; i++)
-            addtmp[i + 1] = valadd(addtmp[i], multmp[i + 2]);
-        act = valadd(addtmp[(nin - 2) - 1], multmp[nin - 1]);
-    }
-    Value *ret = valtanh(act);
+    for (int i = 0; i < n->nin; i++)
+        out = valadd(out, valmul(n->w + i, x + i));
+    out = valtanh(out);
 
     nassert(n);
-    valassert(act);
-    valassert(ret);
+    valassert(out);
 
-    return ret;
+    return out;
 }
 
 unsigned int nparams(Neuron *n, Value **ret) {
@@ -172,14 +144,13 @@ unsigned int lfwd(Layer *l, Value *x, Value **ret) {
     for (int i = 0; i < l->nin; i++)
         valassert(x + i);
 
-    int i;
-    for (i = 0; i < l->nout; i++)
-        ret[i] = nfwd(l->ns + i, x, l->nin);
+    for (int i = 0; i < l->nout; i++)
+        ret[i] = nfwd(l->ns + i, x);
 
-    for (int j = 0; j < i; j++)
-        valassert(ret[j]);
+    for (int i = 0; i < l->nout; i++)
+        valassert(ret[i]);
 
-    return i;
+    return l->nout;
 }
 
 unsigned int lparams(Layer *l, Value **ret) {

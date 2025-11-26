@@ -149,7 +149,7 @@ void ninit(Neuron *n);
 Neuron *nalloc(unsigned int n, unsigned int nin);
 void nassert(Neuron *n);
 char *nshow(Neuron *n);
-Value *nfwd(Neuron *n, Value *x, unsigned int nin);
+Value *nfwd(Neuron *n, Value *x);
 unsigned int nparams(Neuron *n, Value **ret);
 
 /* TODO: Implement these */

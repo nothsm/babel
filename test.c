@@ -372,7 +372,7 @@ void nfwd_basic() {
     valinit(x + 1, VAL_FLOAT, 3.0, NULL, NULL);
     valinit(x + 2, VAL_FLOAT, -1.0, NULL, NULL);
 
-    Value *out = nfwd(n, x, nin);
+    Value *out = nfwd(n, x);
 
     if (!feq(out->val, -0.6043677771))
         error("nfwd_basic: forward pass incorrect (is %f, should be %f)", out->val, -0.6043677771);
