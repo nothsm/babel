@@ -292,12 +292,13 @@ Value *valadd(Value *x, Value *y) {
     valassert(y);
 
     Value *ret = valalloc(1);
-    ret->op = VAL_ADD;
-    ret->grad = 0.0;
-    ret->val = x->val + y->val;
-    ret->prev1 = x;
-    ret->prev2 = y;
-    /* valinit(ret, VAL_ADD, x->val + y->val, x, y); */
+
+    ValueType op = VAL_ADD;
+    float val = x->val + y->val;
+    Value *prev1 = x;
+    Value *prev2 = y;
+
+    valinit(ret, op, val, prev1, prev2);
 
     return ret;
 }
@@ -306,13 +307,14 @@ Value *valmul(Value *x, Value *y) {
     valassert(x);
     valassert(y);
 
-    Value *ret = valalloc(1); /* TODO: add valinit back in this */
-    ret->op = VAL_MUL;
-    ret->grad = 0.0;
-    ret->val = x->val * y->val;
-    ret->prev1 = x;
-    ret->prev2 = y;
-    /* valinit(ret, VAL_MUL, x->val * y->val, x, y); */
+    Value *ret = valalloc(1);
+
+    ValueType op = VAL_MUL;
+    float val = x->val * y->val;
+    Value *prev1 = x;
+    Value *prev2 = y;
+
+    valinit(ret, op, val, prev1, prev2);
 
     return ret;
 }
@@ -321,12 +323,13 @@ Value *valtanh(Value *x) {
     valassert(x);
 
     Value *ret = valalloc(1);
-    ret->op = VAL_TANH;
-    ret->grad = 0.0;
-    ret->val = (exp(2 * x->val) - 1) / (exp(2 * x->val) + 1);
-    ret->prev1 = x;
-    ret->prev2 = NULL;
-    /* valinit(ret, VAL_TANH, (exp(2 * x->val) - 1) / (exp(2 * x->val) + 1), x, NULL); */
+
+    ValueType op = VAL_TANH;
+    float val = (exp(2 * x->val) - 1) / (exp(2 * x->val) + 1);
+    Value *prev1 = x;
+    Value *prev2 = NULL;
+
+    valinit(ret, op, val, prev1, prev2);
 
     return ret;
 }
@@ -435,6 +438,7 @@ void valbwd(Value *v) {
  * - [ ] Setup tests
  * - [ ] Use C for building (copy Tsoding or Casey Muratori)
  * - [ ] Fix warnings
+ * - [ ] Fix main.c
  * - [ ] Systems-level performance optimization
  *   - [ ] DoD
  *   - [ ] Pooled arena allocation
