@@ -57,23 +57,23 @@ void valassert(Value *v) {
     assert(v->id < vid);
 }
 
+/* What if I just predefine all the id's? */
 Value *valalloc(unsigned int n) {
     assert(vid + n <= VALCAP);
 
     unsigned int oldvid = vid;
 
-    Value *ret = VALTAB + vid;
     for (int i = 0; i < n; i++) {
-        Value *v = VALTAB + vid;
-        memset(v, 0, sizeof(*v));
-        v->id = vid++;
+        memset(VALTAB + vid, 0, sizeof(VALTAB[vid]));
+        VALTAB[vid].id = vid;
+        vid += 1;
     }
 
-    assert(ret->id == oldvid);
+    assert(VALTAB[vid - n].id == oldvid);
     for (int i = 0; i < n; i++)
         assert(VALTAB[oldvid + i].id == oldvid + i);
 
-    return ret;
+    return VALTAB + (vid - n);
 }
 
 /* TODO: add valfree */
@@ -287,6 +287,16 @@ char *valsexpr(Value *v) {
         assert(false);
 }
 
+/* TODO */
+Value *valfloats(unsigned int n, float *xs) {
+
+}
+
+/* TODO */
+Value *valfloat(float x) {
+    return valfloats(1, &x);
+}
+
 Value *valadd(Value *x, Value *y) {
     valassert(x);
     valassert(y);
@@ -440,11 +450,15 @@ void valbwd(Value *v) {
  * - [ ] Setup tests
  * - [ ] Use C for building (copy Tsoding or Casey Muratori)
  * - [ ] Fix warnings
- * - [ ] Fix main.c
+ * - [ ] Fix main.c and test neuron training
  * - [ ] Allow custom allocators
  * - [ ] Add tests to verify id allocation
  * - [ ] If you put these operations in a training loop, you don't want to allocate new memory on each iteration...
- * - [ ] Test neuron training
+ * - [ ] Add proper string allocation
+ * - [ ] Use doubles instead of floats for higher precision
+ * - [ ] Use explicitly sized types
+ * - [ ] Add valfloat operation to allocate multiple floats
+ * - [ ] cool feature: compile the learned algorithm of the model into code
  * - [ ] Systems-level performance optimization
  *   - [ ] DoD
  *   - [ ] Pooled arena allocation

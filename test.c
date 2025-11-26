@@ -10,6 +10,7 @@
 
 void valalloc_basic(void);
 void valinit_basic(void);
+// void valfloat_basic(void);
 void valbwd_basic(void);
 void valbwd_tanh(void);
 void valbwd_selfref(void);
@@ -27,6 +28,7 @@ int main(int argc, char *argv[]) {
 
     valalloc_basic();
     valinit_basic();
+    // valfloat_basic();
     valbwd_basic();
     valbwd_tanh();
     valbwd_selfref();
