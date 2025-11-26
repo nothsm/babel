@@ -15,8 +15,11 @@ unsigned int allocated;
 Value VALTAB[VALCAP];
 unsigned int vid;
 
-extern Neuron NTAB[VALCAP];
-extern unsigned int nn;
+extern Neuron NEURTAB[NEURCAP];
+extern unsigned int nneur;
+
+extern Layer LAYTAB[LAYCAP];
+extern unsigned int nlay;
 
 void stdbg(unsigned int beg, unsigned int end) {
     for (int i = beg; i < end; i++)
@@ -33,8 +36,11 @@ void engineinit() {
     memset(VALTAB, 0, VALCAP);
     vid = 0;
 
-    memset(NTAB, 0, VALCAP);
-    nn = 0;
+    memset(NEURTAB, 0, NEURCAP);
+    nneur = 0;
+
+    memset(LAYTAB, 0, LAYCAP);
+    nlay = 0;
 }
 
 void valassert(Value *v) {
@@ -79,9 +85,7 @@ Value *valalloc(unsigned int n) {
 Value *valinit(Value *v, ValueType op, float val, Value *prev1, Value *prev2) {
     assert(prev1 != v);
     assert(prev2 != v);
-    // assert(vid < VALCAP);
 
-    // v->id = vid++;
     v->op = op;
     v->val = val;
     v->grad = 0.0;
@@ -390,10 +394,13 @@ void valbwd1(Value *v) {
 void _valtsort(Value *v, Value **ret, unsigned int *nret, bool *seen) {
     if (!seen[v->id]) {
         seen[v->id] = true;
+
         if (v->prev1 != NULL)
             _valtsort(v->prev1, ret, nret, seen);
+
         if (v->prev2 != NULL)
             _valtsort(v->prev2, ret, nret, seen);
+
         ret[(*nret)++] = v;
     }
 }

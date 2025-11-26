@@ -18,6 +18,7 @@
 #define STRCAP (1024 * 32)
 #define VALCAP 2048 /* TODO: decrease this */
 #define NEURCAP 128
+#define LAYCAP 64
 #define RECLIM 32
 #define MAXPROGRAMS (32 * 1024 * 1024) /* 8MB limit... TODO: decrease this */
 #define NGROW 32
@@ -152,7 +153,8 @@ Value *nfwd(Neuron *n, Value *x, unsigned int nin);
 unsigned int nparams(Neuron *n, Value **ret);
 
 /* TODO: Implement these */
-void linit(Layer *l, unsigned int nin, unsigned int nout);
+void linit(Layer *l);
+Layer *lalloc(unsigned int n, unsigned int nin, unsigned int nout);
 void lassert(Layer *l);
 char *lshow(Layer *l);
 unsigned int lfwd(Layer *l, Value *x, Value **ret);

@@ -5,8 +5,11 @@
 
 #define frand() ((double) rand() / (RAND_MAX + 1.0))
 
-Neuron NTAB[NEURCAP];
-unsigned int nn;
+Neuron NEURTAB[NEURCAP];
+unsigned int nneur;
+
+Layer LAYTAB[LAYCAP];
+unsigned int nlay;
 
 extern char STRTAB[STRCAP];
 extern unsigned int allocated;
@@ -24,10 +27,10 @@ void nassert(Neuron *n) {
 
 /* TODO: This should also allocate weights */
 Neuron *nalloc(unsigned int n, unsigned int nin) {
-    assert(nn + n <= NEURCAP);
+    assert(nneur + n <= NEURCAP);
 
-    Neuron *ret = NTAB + nn;
-    nn += n;
+    Neuron *ret = NEURTAB + nneur;
+    nneur += n;
 
     for (int i = 0; i < n; i++) {
         /* TODO: allocate w, b as a single array? */
@@ -122,24 +125,37 @@ unsigned int nparams(Neuron *n, Value **ret) {
 
     for (int i = 0; i < n->nin; i++)
         ret[i] = n->w + i;
-    ret[n->nin] = &(n->b);
+    ret[n->nin] = n->b;
 
-    return n->nin + 1;
+    return n->nin + 1; /* +1 for bias */
 }
 
 /* TODO */
-void linit(Layer *l, unsigned int nin, unsigned int nout) {
-    assert(l != NULL);
+Layer *lalloc(unsigned int n, unsigned int nin, unsigned int nout) {
+    assert(n > 0);
     assert(nin > 0);
     assert(nout > 0);
+    assert(nlay + n <= LAYCAP);
 
-    Neuron *ns = nalloc(nout, nin);
-    for (int i = 0; i < nout; i++)
-        ninit(ns + i);
 
-    l->nin = nin;
-    l->nout = nout;
-    l->ns = ns;
+    Layer *ret = LAYTAB + nlay;
+    nlay += n;
+
+    for (int i = 0; i < n; i++) {
+        (ret + i)->nin = nin;
+        (ret + i)->nout = nout;
+        (ret + i)->ns = nalloc(nout, nin);
+    }
+
+    return ret;
+}
+
+/* TODO */
+void linit(Layer *l) {
+    assert(l != NULL);
+
+    for (int i = 0; i < l->nout; i++)
+        ninit(l->ns + i);
 
     lassert(l);
 }
