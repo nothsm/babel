@@ -12,6 +12,7 @@ void valalloc_basic(void);
 void valinit_basic(void);
 void valbwd_basic(void);
 void valbwd_tanh(void);
+void valbwd_selfref(void);
 void valeq_basic(void);
 
 void nalloc_basic(void);
@@ -28,6 +29,7 @@ int main(int argc, char *argv[]) {
     valinit_basic();
     valbwd_basic();
     valbwd_tanh();
+    valbwd_selfref();
     valeq_basic();
 
     nalloc_basic();
@@ -205,6 +207,147 @@ void valbwd_tanh() {
     pass("");
 }
 
+void valbwd_selfref() {
+    test("valbwd_selfref");
+
+    /* repeated tanh */
+
+    Value *x = valalloc(1);
+
+    valinit(x, VAL_FLOAT, 1.0, NULL, NULL); 
+
+    for (int i = 0; i < 3; i++)
+        x = valtanh(x);
+
+    if (!feq(x->val, 0.5662699762))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", x->val, 0.566269976);
+    if (!feq(x->prev1->val, 0.642014992))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", x->prev1->val, 0.642014992);
+    if (!feq(x->prev1->prev1->val, 0.761594156))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", x->prev1->prev1->val, 0.761594156);
+    if (!feq(x->prev1->prev1->prev1->val, 1.0))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", x->prev1->prev1->prev1->val, 1.0);
+
+    valbwd(x);
+
+    if (!feq(x->grad, 1.0))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", x->grad, 1.0);
+    if (!feq(x->prev1->grad, 0.6793383143))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", x->prev1->grad, 0.6793383143);
+    if (!feq(x->prev1->prev1->grad, 0.3993264401))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", x->prev1->prev1->grad, 0.3993264401);
+    if (!feq(x->prev1->prev1->prev1->grad, 0.1677068588))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", x->prev1->prev1->prev1->grad, 0.1677068588);
+
+    /* repeated add */
+
+    Value *xs = valalloc(3);
+    Value *out = valalloc(1);
+
+    valinit(xs + 0, VAL_FLOAT, 1.0, NULL, NULL);
+    valinit(xs + 1, VAL_FLOAT, 2.0, NULL, NULL);
+    valinit(xs + 2, VAL_FLOAT, 3.0, NULL, NULL);
+
+    valinit(out, VAL_FLOAT, 0.0, NULL, NULL);
+
+    for (int i = 0; i < 3; i++)
+        out = valadd(out, xs + i);
+
+    /* check intermediate out values */
+    if (!feq(out->val, 6.0))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", out->val, 6.0);
+    if (!feq(out->prev1->val, 3.0))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", out->prev1->val, 3.0);
+    if (!feq(out->prev1->prev1->val, 1.0))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", out->prev1->prev1->val, 1.0);
+    if (!feq(out->prev1->prev1->prev1->val, 0.0))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", out->prev1->prev1->prev1->val, 0.0);
+
+    /* check x[2], x[1], x[0] */
+    if (!feq(out->prev2->val, 3.0))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", out->prev2->val, 3.0);
+    if (!feq(out->prev1->prev2->val, 2.0))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", out->prev1->prev2->val, 2.0);
+    if (!feq(out->prev1->prev1->prev2->val, 1.0))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", out->prev1->prev1->prev2->val, 0.0);
+
+    valbwd(out);
+
+    /* check intermediate out values */
+    if (!feq(out->grad, 1.0))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", out->grad, 1.0);
+    if (!feq(out->prev1->grad, 1.0))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", out->prev1->grad, 1.0);
+    if (!feq(out->prev1->prev1->grad, 1.0))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", out->prev1->prev1->grad, 1.0);
+    if (!feq(out->prev1->prev1->prev1->grad, 1.0))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", out->prev1->prev1->prev1->grad, 1.0);
+
+    /* check x[2], x[1], x[0] */
+    if (!feq(out->prev2->grad, 1.0))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", out->prev2->grad, 1.0);
+    if (!feq(out->prev1->prev2->grad, 1.0))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", out->prev1->prev2->grad, 1.0);
+    if (!feq(out->prev1->prev1->prev2->grad, 1.0))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", out->prev1->prev1->prev2->grad, 1.0);
+
+    /* repeated mul */
+
+    xs = valalloc(3);
+    out = valalloc(1);
+
+    valinit(xs + 0, VAL_FLOAT, 1.0, NULL, NULL);
+    valinit(xs + 1, VAL_FLOAT, 2.0, NULL, NULL);
+    valinit(xs + 2, VAL_FLOAT, 3.0, NULL, NULL);
+
+    valinit(out, VAL_FLOAT, 1.0, NULL, NULL);
+
+    for (int i = 0; i < 3; i++)
+        out = valmul(out, xs + i);
+
+    /* check intermediate out values */
+    if (!feq(out->val, 6.0))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", out->val, 6.0);
+    if (!feq(out->prev1->val, 2.0))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", out->prev1->val, 2.0);
+    if (!feq(out->prev1->prev1->val, 1.0))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", out->prev1->prev1->val, 1.0);
+    if (!feq(out->prev1->prev1->prev1->val, 1.0))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", out->prev1->prev1->prev1->val, 1.0);
+
+    /* check x[2], x[1], x[0] */
+    if (!feq(out->prev2->val, 3.0))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", out->prev2->val, 3.0);
+    if (!feq(out->prev1->prev2->val, 2.0))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", out->prev1->prev2->val, 2.0);
+    if (!feq(out->prev1->prev1->prev2->val, 1.0))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", out->prev1->prev1->prev2->val, 0.0);
+
+    valbwd(out);
+
+    /* check intermediate out values */
+    if (!feq(out->grad, 1.0))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", out->grad, 1.0);
+    if (!feq(out->prev1->grad, 3.0))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", out->prev1->grad, 3.0);
+    if (!feq(out->prev1->prev1->grad, 6.0))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", out->prev1->prev1->grad, 6.0);
+    if (!feq(out->prev1->prev1->prev1->grad, 6.0))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", out->prev1->prev1->prev1->grad, 6.0);
+
+    /* check x[2], x[1], x[0] */
+    if (!feq(out->prev2->grad, 2.0))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", out->prev2->grad, 2.0);
+    if (!feq(out->prev1->prev2->grad, 3.0))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", out->prev1->prev2->grad, 3.0);
+    if (!feq(out->prev1->prev1->prev2->grad, 6.0))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", out->prev1->prev1->prev2->grad, 6.0);
+
+    /* TODO: mixed op tests */
+
+    pass("");
+}
+
 void nalloc_basic() {
     test("nalloc_basic");
 
@@ -316,4 +459,5 @@ void lparams_basic() {
 /* TODO:
  * [ ] copy peter norvig testing style
  * [ ] add numerical gradient tests
+ * [ ] Print how many test cases are run/passed/failed
  */

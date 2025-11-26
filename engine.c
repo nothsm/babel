@@ -67,10 +67,8 @@ Value *valalloc(unsigned int n) {
     Value *ret = VALTAB + vid;
     for (int i = 0; i < n; i++) {
         Value *v = VALTAB + vid;
-
         memset(v, 0, sizeof(*v));
-        v->id = vid;
-        vid += 1;
+        v->id = vid++;
     }
 
     assert(ret->id == oldvid);
@@ -363,9 +361,7 @@ void valtanhbwd(Value *v) {
     assert(v->op == VAL_TANH);
     assert(v->prev2 == NULL);
 
-    float t = v->val;
-
-    v->prev1->grad += v->grad * (1 - (t * t));
+    v->prev1->grad += v->grad * (1 - (v->val * v->val)); /* dL/dvprev * dL/dv * dv/dvprev */
 
     valassert(v);
 }
@@ -420,6 +416,7 @@ unsigned int valtsort(Value *v, Value **ret) {
 
 void valbwd(Value *v) {
     valassert(v);
+    assert(v->grad == 0.0); /* shouldnt use == to compare floats */
 
     Value *topo[VALCAP] = {0};
     unsigned int ntopo = valtsort(v, topo);
@@ -446,6 +443,8 @@ void valbwd(Value *v) {
  * - [ ] Use C for building (copy Tsoding or Casey Muratori)
  * - [ ] Fix warnings
  * - [ ] Fix main.c
+ * - [ ] Allow custom allocators
+ * - [ ] Add tests to verify id allocation
  * - [ ] Systems-level performance optimization
  *   - [ ] DoD
  *   - [ ] Pooled arena allocation

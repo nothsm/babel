@@ -137,14 +137,13 @@ Layer *lalloc(unsigned int n, unsigned int nin, unsigned int nout) {
     assert(nout > 0);
     assert(nlay + n <= LAYCAP);
 
-
     Layer *ret = LAYTAB + nlay;
     nlay += n;
 
     for (int i = 0; i < n; i++) {
-        (ret + i)->nin = nin;
-        (ret + i)->nout = nout;
-        (ret + i)->ns = nalloc(nout, nin);
+        ret[i].nin = nin;
+        ret[i].nout = nout;
+        ret[i].ns = nalloc(nout, nin);
     }
 
     return ret;
