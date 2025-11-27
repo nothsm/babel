@@ -123,8 +123,7 @@ void valfloat_basic() {
     if (x->prev2 != NULL)
         error("valfloat_basic: bad init");
 
-    float data[3] = {2.0, 4.0, 6.0};
-    Value *xs = valfloats(3, data); /* TODO: Is there a way to pass in the array directly? */
+    Value *xs = valfloats(3, (float[]){2.0, 4.0, 6.0}); /* TODO: Is there a way to pass in the array directly? */
 
     if (xs[0].op != VAL_FLOAT)
         error("valfloat_basic: bad init");
@@ -181,15 +180,10 @@ void valeq_basic() {
 void valbwd_basic() {
     test("valbwd_basic");
 
-    Value *a = valalloc(1);
-    Value *b = valalloc(1);
-    Value *c = valalloc(1);
-    Value *f = valalloc(1);
-
-    valinit(a, VAL_FLOAT, 2.0, NULL, NULL);
-    valinit(b, VAL_FLOAT, -3.0, NULL, NULL);
-    valinit(c, VAL_FLOAT, 10.0, NULL, NULL);
-    valinit(f, VAL_FLOAT, -2.0, NULL, NULL);
+    Value *a = valfloat(2.0);
+    Value *b = valfloat(-3.0);
+    Value *c = valfloat(10.0);
+    Value *f = valfloat(-2.0);
 
     Value *e = valmul(a, b);
     Value *d = valadd(e, c);
@@ -219,17 +213,11 @@ void valbwd_basic() {
 void valbwd_tanh() {
     test("valbwd_tanh");
 
-    Value *x1 = valalloc(1);
-    Value *x2 = valalloc(1);
-    Value *w1 = valalloc(1);
-    Value *w2 = valalloc(1);
-    Value *b  = valalloc(1);
-
-    valinit(x1, VAL_FLOAT, 2.0, NULL, NULL);
-    valinit(x2, VAL_FLOAT, 0.0, NULL, NULL);
-    valinit(w1, VAL_FLOAT, -3.0, NULL, NULL);
-    valinit(w2, VAL_FLOAT, 1.0, NULL, NULL);
-    valinit(b, VAL_FLOAT, 6.8813735870195432, NULL, NULL);
+    Value *x1 = valfloat(2.0);
+    Value *x2 = valfloat(0.0);
+    Value *w1 = valfloat(-3.0);
+    Value *w2 = valfloat(1.0);
+    Value *b  = valfloat(6.8813735870195432);
 
     Value *x1w1 = valmul(x1, w1);
     Value *x2w2 = valmul(x2, w2);
@@ -267,10 +255,7 @@ void valbwd_selfref() {
     test("valbwd_selfref");
 
     /* repeated tanh */
-
-    Value *x = valalloc(1);
-
-    valinit(x, VAL_FLOAT, 1.0, NULL, NULL); 
+    Value *x = valfloat(1.0);
 
     for (int i = 0; i < 3; i++)
         x = valtanh(x);
@@ -296,16 +281,9 @@ void valbwd_selfref() {
         error("valbwd_selfref: grad is incorrect (is %f, should be %f)", x->prev1->prev1->prev1->grad, 0.1677068588);
 
     /* repeated add */
+    Value *xs = valfloats(3, (float[]){1.0, 2.0, 3.0});
 
-    Value *xs = valalloc(3);
-    Value *out = valalloc(1);
-
-    valinit(xs + 0, VAL_FLOAT, 1.0, NULL, NULL);
-    valinit(xs + 1, VAL_FLOAT, 2.0, NULL, NULL);
-    valinit(xs + 2, VAL_FLOAT, 3.0, NULL, NULL);
-
-    valinit(out, VAL_FLOAT, 0.0, NULL, NULL);
-
+    Value *out = valfloat(0.0);
     for (int i = 0; i < 3; i++)
         out = valadd(out, xs + i);
 
@@ -349,15 +327,9 @@ void valbwd_selfref() {
 
     /* repeated mul */
 
-    xs = valalloc(3);
-    out = valalloc(1);
+    xs = valfloats(3, (float[]){1.0, 2.0, 3.0});
 
-    valinit(xs + 0, VAL_FLOAT, 1.0, NULL, NULL);
-    valinit(xs + 1, VAL_FLOAT, 2.0, NULL, NULL);
-    valinit(xs + 2, VAL_FLOAT, 3.0, NULL, NULL);
-
-    valinit(out, VAL_FLOAT, 1.0, NULL, NULL);
-
+    out = valfloat(1.0);
     for (int i = 0; i < 3; i++)
         out = valmul(out, xs + i);
 
@@ -423,10 +395,7 @@ void nfwd_basic() {
     for (int i = 0; i < nin; i++)
         valinit(n->w + i, VAL_FLOAT, pow(-1, i) * (i + 1.0) / 10.0, NULL, NULL);
 
-    Value *x = valalloc(3);
-    valinit(x + 0, VAL_FLOAT, 2.0, NULL, NULL);
-    valinit(x + 1, VAL_FLOAT, 3.0, NULL, NULL);
-    valinit(x + 2, VAL_FLOAT, -1.0, NULL, NULL);
+    Value *x = valfloats(3, (float[]){2.0, 3.0, -1.0});
 
     Value *out = nfwd(n, x);
 
@@ -456,10 +425,7 @@ void lfwd_basic() {
         valinit(l->ns[1].w + i, VAL_FLOAT, pow(-1, (i + 1)) * (i + 1.0) / 10.0, NULL, NULL);
  
 
-    Value x[3] = {0};
-    valinit(x + 0, VAL_FLOAT, 2.0, NULL, NULL);
-    valinit(x + 1, VAL_FLOAT, 3.0, NULL, NULL);
-    valinit(x + 2, VAL_FLOAT, -1.0, NULL, NULL);
+    Value *x = valfloats(3, (float[]){2.0, 3.0, -1.0});
 
     Value *out[2] = {0};
     lfwd(l, x, out);
