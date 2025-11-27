@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
 
     /* TODO: make it easy to construct 2d data? */
 
-    unsigned int nepoch = 64;
+    unsigned int nepoch = 16;
 
     Value *xs00 = valfloat(2.0);
     Value *xs01 = valfloat(3.0);
@@ -68,16 +68,15 @@ int main(int argc, char **argv) {
         }
 
         /* zero grad */
-        unsigned int paramslen = nparams(n, params);
-        for (int i = 0; i < paramslen; i++)
+        unsigned int params_len = nparams(n, params);
+        for (int i = 0; i < params_len; i++)
             params[i]->grad = 0.0;
 
         /* backward */
         valbwd(loss);
 
         /* optimizer step */
-        paramslen = nparams(n, params);
-        for (int i = 0; i < paramslen; i++)
+        for (int i = 0; i < params_len; i++)
             params[i]->val += -0.1 * params[i]->grad;
 
         printf("loss: %.5f\n", loss->val);
@@ -96,9 +95,22 @@ int main(int argc, char **argv) {
         for (int j = 0; j < 4; j++) {
             Value *ygt = ys[j];
             Value **ypred = mlpfwd(mlp, xs[j]);
-            Value *l = valpow(valsub(ypred, ygt), 2);
+            Value *l = valpow(valsub(ypred[0], ygt), 2);
             loss = valadd(loss, l);
         }
+
+        /* zero grad */
+        unsigned int params_len = mlpparams(mlp, params);
+        for (int i = 0; i < params_len; i++)
+            params[i]->grad = 0.0;
+
+        valbwd(loss);
+
+        /* optimizer step */
+        for (int i = 0; i < params_len; i++)
+            params[i]->val += -0.1 * params[i]->grad;
+
+        printf("loss: %.5f\n", loss->val);
     }
 
     return EXIT_SUCCESS;

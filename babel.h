@@ -16,7 +16,7 @@
 #define MEMCAP (1024 * 1024 * 1024) /* 256MB mem lim... TODO: decrease this shit! */
 #define ARRCAP 1024 /* TODO: decrease this */
 #define STRCAP (1024 * 32)
-#define VALCAP 4096 /* TODO: decrease this */
+#define VALCAP 16384 /* TODO: decrease this */
 #define NEURCAP 128
 #define LAYCAP 64
 #define RECLIM 32

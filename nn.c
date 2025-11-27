@@ -208,22 +208,23 @@ void mlpinit(MLP *mlp) {
     mlpcheck(mlp);
 }
 
+/* Make this not a hack */
 Value **mlpfwd(MLP *mlp, Value **x) {
     mlpcheck(mlp);
 
     Value *out0[VALCAP] = {0};
     lfwd(mlp->layers[0], x, out0);
 
-    printf("%s\n", valshow(out0[0]));
-    printf("%s\n", valshow(out0[1]));
-    printf("%s\n", valshow(out0[2]));
-    printf("%s\n", valshow(out0[3]));
-
-    assert(false);
+    // printf("%s\n", valshow(out0[0]));
+    // printf("%s\n", valshow(out0[1]));
+    // printf("%s\n", valshow(out0[2]));
+    // printf("%s\n", valshow(out0[3]));
 
     Value *out1[VALCAP] = {0};
     lfwd(mlp->layers[1], out0, out1);
 
+    Value *out2[VALCAP] = {0};
+    lfwd(mlp->layers[2], out1, out2);
 
     // lfwd(mlp->layers[1], x, out);
     // x = out;
@@ -233,7 +234,20 @@ Value **mlpfwd(MLP *mlp, Value **x) {
     //     x = out;
     // }
 
-    // valcheck(out);
+    valcheck(out2[0]);
 
-    return NULL;
+    return out2;
+}
+
+unsigned int mlpparams(MLP *mlp, Value **ret) {
+    mlpcheck(mlp);
+    assert(ret != NULL);
+
+    unsigned int n = 0;
+    for (int i = 0; i < mlp->nlayers; i++)
+        n += lparams(mlp->layers[i], ret + n);
+
+    mlpcheck(mlp);
+
+    return n;
 }

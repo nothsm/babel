@@ -482,23 +482,40 @@ void valbwd(Value *v) {
  * TODO
  * - [ ] Replace pointers with handles
  * - [ ] Add Raylib visualization
- * - [ ] Add TUI visualization
- * - [ ] Add C compilation
+ * - [ ] Add TUI visualization/dashboard
+ * - [ ] Add compilation to C backend 
  * - [ ] Support tensors
- * - [ ] Add Python bindings
- * - [ ] Add Racket/Scheme bindings
+ * - [ ] feature: Add Python frontend / bindings 
+ * - [ ] feature: Add Racket/Scheme frontend / bindings
  * - [ ] Use C for building (copy Tsoding or Casey Muratori)
  * - [ ] Fix warnings
- * - [ ] Fix main.c and test neuron training
  * - [ ] Allow custom allocators as parameters
  * - [ ] Add tests to verify id allocation
  * - [ ] Add proper string allocation
  * - [ ] Use doubles instead of floats for higher precision
  * - [ ] Use explicitly sized types
  * - [ ] cool feature: compile the learned algorithm of the model into code
- * - [ ] cool feature: implement interesting physics/computational math calculations
- * - [ ] Make it easy to mix-and-match building blocks to build models
  * - [ ] What if valfloats just took in a shape?
+ * - [ ] feature: Support polyhedral compilation
+ * - [ ] feature: Support multiple backends
+ * - [ ] feature: allow users to specify rewrite rules
+ * - [ ] feature: hand-optimized kernels for each backend
+ * - [ ] feature: use linear programming for optimization
+ * - [ ] feature: high-level neural network building block library
+ * - [ ] feature: eager-evaluated array library
+ * - [ ] feature: support high-level programming language frontends in addition to tensors
+ * - [ ] feature: support input-output frontend in addition to tensors
+ * - [ ] feature: fastest compiler + fastest code + rewrite rules + runs everywhere + tiny binary
+ * - [ ] feature: support distributed training
+ * - [ ] feature: use program synthesis + RL for the kernel search 
+ * - [ ] feature: add cool concurrency/parallelism
+ * - [ ] feature: program synthesis building block library
+ * - [ ] demo: monte carlo calculations
+ * - [ ] demo: interesting physics/math computations
+ * - [ ] demo: easy to implement frontier papers
+ * - [ ] demo: llm training
+ * - [ ] demo: llm inference
+ * - [ ] demo: run on something funny like a DS
  * - [ ] Systems-level performance optimization
  *   - [ ] DoD
  *   - [ ] Pooled arena allocation
