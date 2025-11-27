@@ -18,11 +18,14 @@ void valbwd_tanh(void);
 void valbwd_selfref(void);
 void valeq_basic(void);
 
-void nalloc_basic(void);
 void nfwd_basic(void);
+void nparams_basic(void);
 
 void lfwd_basic(void);
 void lparams_basic(void);
+
+void mlpfwd_basic(void);
+void mlpparams_basic(void);
 
 /* I think I have to refactor all my backward tests to use valalloc */
 int main(int argc, char *argv[]) {
@@ -38,11 +41,14 @@ int main(int argc, char *argv[]) {
     valbwd_selfref();
     valeq_basic();
 
-    nalloc_basic();
     nfwd_basic();
+    nparams_basic();
 
     lfwd_basic();
     lparams_basic();
+
+    mlpfwd_basic();
+    mlpparams_basic();
 }
 
 bool feq(float x, float y) {
@@ -407,14 +413,6 @@ void valbwd_selfref() {
     pass("");
 }
 
-void nalloc_basic() {
-    test("nalloc_basic");
-
-    printf(" ** warning: not implemented ** ");
-
-    pass("");
-}
-
 void nfwd_basic() {
     test("nfwd_basic");
 
@@ -434,6 +432,34 @@ void nfwd_basic() {
         error("nfwd_basic: forward pass incorrect (is %f, should be %f)", out->val, -0.6043677771);
     if (!feq(out->grad, 0.0))
         error("nfwd_basic: gradient should be 0 after forward pass");
+
+    pass("");
+}
+
+void nparams_basic() {
+    test("nparams_basic");
+
+    unsigned int nin = 3;
+    Neuron *n = nalloc(1, nin);
+
+    ninit(n);
+
+    /* initialize first neuron to [0.1, -0.2, 0.3] */
+    for (int i = 0; i < nin; i++)
+        valinit(n->w + i, VAL_FLOAT, pow(-1, i) * (i + 1.0) / 10.0, NULL, NULL);
+ 
+    Value *buf[VALCAP] = {0};
+    unsigned int len = nparams(n, buf);
+
+    if (!(len == 4))
+        error("nparams_basic: number of parameters is incorrect (is %d, should be %d)", len, 4);
+
+    if (!feq(buf[0]->val, 0.1))
+        error("nparams_basic: param is incorrect (is %f, should be %f)", buf[0]->val, 0.1);
+    if (!feq(buf[1]->val, -0.2))
+        error("nparams_basic: param is incorrect (is %f, should be %f)", buf[1]->val, -0.2);
+    if (!feq(buf[2]->val, 0.3))
+        error("nparams_basic: param is incorrect (is %f, should be %f)", buf[2]->val, 0.3);
 
     pass("");
 }
@@ -507,6 +533,14 @@ void lparams_basic() {
         error("lparams_basic: param is incorrect (is %f, should be %f)", ret[5]->val, -0.3);
 
     pass("");
+}
+
+void mlpfwd_basic() {
+    error("mlpfwd_basic: not implemented");
+}
+
+void mlpparams_basic() {
+    error("mlpparams_basic: not implemented");
 }
 
 /* TODO:

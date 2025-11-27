@@ -489,6 +489,7 @@ void valbwd(Value *v) {
  * - [ ] Use doubles instead of floats for higher precision
  * - [ ] Use explicitly sized types
  * - [ ] cool feature: compile the learned algorithm of the model into code
+ * - [ ] cool feature: implement interesting physics/computational math calculations
  * - [ ] Systems-level performance optimization
  *   - [ ] DoD
  *   - [ ] Pooled arena allocation

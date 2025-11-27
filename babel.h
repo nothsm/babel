@@ -172,8 +172,8 @@ unsigned int lparams(Layer *l, Value **ret);
 
 /* TODO: Implement these */
 void mlpinit(MLP *mlp);
-void mlpalloc(unsigned int nin, unsigned int *nouts, unsigned int n_nouts);
-void mlp(MLP *mlp);
+MLP *mlpalloc(unsigned int nin, unsigned int *nouts, unsigned int n_nouts);
+void mlpcheck(MLP *mlp);
 void mlpfwd(MLP *mlp, Value *x, Value **ret);
 unsigned int mlpparams(MLP *mlp, Value **ret);
 

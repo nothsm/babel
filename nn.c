@@ -163,10 +163,12 @@ unsigned int lparams(Layer *l, Value **ret) {
     return n;
 }
 
-void mlpalloc(unsigned int nin, unsigned int *nouts, unsigned int n_nouts) {
+MLP *mlpalloc(unsigned int nin, unsigned int *nouts, unsigned int n_nouts) {
     themlp.layers[0] = lalloc(1, nin, nouts[0]);
     for (int i = 0; i < n_nouts - 1; i++)
         themlp.layers[i] = lalloc(1, nouts[i], nouts[i + 1]);
+
+    return &themlp;
 }
 
 void mlpassert(MLP *mlp) {
