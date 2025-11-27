@@ -130,6 +130,8 @@ Value *valfloat(float);
 Value *valmul(Value *, Value *);
 Value *valadd(Value *, Value *);
 Value *valtanh(Value *);
+Value *valsub(Value *, Value *);
+Value *valpow(Value *, unsigned int);
 void valbwd(Value *);
 
 

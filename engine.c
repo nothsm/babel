@@ -339,6 +339,31 @@ Value *valmul(Value *x, Value *y) {
     return ret;
 }
 
+Value *valsub(Value *x, Value *y) {
+    valassert(x);
+    valassert(y);
+
+    Value *ret = valadd(x, valmul(valfloat(-1.0), y));
+
+    valassert(ret);
+
+    return ret;
+}
+
+Value *valpow(Value *v, unsigned int n) {
+    assert(n > 0);
+    valassert(v);
+
+    /* TODO: Do I even need to allocate this guy? */
+    Value *out = valfloat(1.0);
+    for (int i = 0; i < n; i++)
+        out = valmul(out, v);
+
+    valassert(out);
+
+    return out;
+}
+
 Value *valtanh(Value *x) {
     valassert(x);
 
@@ -448,8 +473,6 @@ void valbwd(Value *v) {
 
 /*
  * TODO
- * - [ ] Make it easier to construct and forward pass datasets
- * - [ ] Check valinit id allocations
  * - [ ] Replace pointers with handles
  * - [ ] Add Raylib visualization
  * - [ ] Add TUI visualization
@@ -457,13 +480,11 @@ void valbwd(Value *v) {
  * - [ ] Support tensors
  * - [ ] Add Python bindings
  * - [ ] Add Racket/Scheme bindings
- * - [ ] Setup tests
  * - [ ] Use C for building (copy Tsoding or Casey Muratori)
  * - [ ] Fix warnings
  * - [ ] Fix main.c and test neuron training
- * - [ ] Allow custom allocators
+ * - [ ] Allow custom allocators as parameters
  * - [ ] Add tests to verify id allocation
- * - [ ] If you put these operations in a training loop, you don't want to allocate new memory on each iteration...
  * - [ ] Add proper string allocation
  * - [ ] Use doubles instead of floats for higher precision
  * - [ ] Use explicitly sized types
@@ -471,4 +492,7 @@ void valbwd(Value *v) {
  * - [ ] Systems-level performance optimization
  *   - [ ] DoD
  *   - [ ] Pooled arena allocation
+ * 
+ * 
+ * - If you put these operations in a training loop, you don't want to allocate new memory on each iteration...
  */

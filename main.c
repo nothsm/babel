@@ -8,85 +8,49 @@ int main(int argc, char **argv) {
 
     printf("\n");
     printf("--- Neuron ---\n");
-    Neuron *n = nalloc(1);
     unsigned int nin = 3;
+    Neuron *n = nalloc(1, 3);
 
-    ninit(n, nin);
-    printf("%.5f %.5f %.5f\n", n->w[0].val, n->w[1].val, n->w[2].val);
+    ninit(n);
 
-    Value x[3] = {0};
-    valinit(x, VAL_FLOAT, 2.0, NULL, NULL);
-    valinit(x + 1, VAL_FLOAT, 3.0, NULL, NULL);
-    valinit(x + 2, VAL_FLOAT, -1.0, NULL, NULL);
-    Value *vret = nfwd(n, x, nin);
-    printf("%s\n", valsexpr(vret));
-    valbwd(vret);
-    printf("%s\n", valsexpr(vret));
+    printf("%.5f %.5f %.5f\n", n->w[0].val, n->w[1].val, n->w[2].val); /* show weights */
 
-    Value X0[3] = {0};
-    Value X1[3] = {0};
-    Value X2[3] = {0};
-    Value X3[3] = {0};
-    Value *xs[4] = {X0, X1, X2, X3};
-    Value ys[4] = {0};
-    valinit(X0 + 0, VAL_FLOAT, 2.0, NULL, NULL);
-    valinit(X0 + 1 , VAL_FLOAT, 3.0, NULL, NULL);
-    valinit(X0 + 2, VAL_FLOAT, -1.0, NULL, NULL);
+    /* TODO: make it easy to construct 2d data? */
 
-    valinit(X1 + 0, VAL_FLOAT, 3.0, NULL, NULL);
-    valinit(X1 + 1 , VAL_FLOAT, -1.0, NULL, NULL);
-    valinit(X1 + 2, VAL_FLOAT, 0.5, NULL, NULL);
+    unsigned int nepoch = 20;
 
-    valinit(X2 + 0, VAL_FLOAT, 0.5, NULL, NULL);
-    valinit(X2 + 1 , VAL_FLOAT, 1.0, NULL, NULL);
-    valinit(X2 + 2, VAL_FLOAT, 1.0, NULL, NULL);
-
-    valinit(X3 + 0, VAL_FLOAT, 1.0, NULL, NULL);
-    valinit(X3 + 1 , VAL_FLOAT, 1.0, NULL, NULL);
-    valinit(X3 + 2, VAL_FLOAT, -1.0, NULL, NULL);
-
-    valinit(ys + 0, VAL_FLOAT, 1.0, NULL, NULL);
-    valinit(ys + 1, VAL_FLOAT, -1.0, NULL, NULL);
-    valinit(ys + 2, VAL_FLOAT, -1.0, NULL, NULL);
-    valinit(ys + 3, VAL_FLOAT, 1.0, NULL, NULL);
+    Value *xs[4] = {valfloats(3, (float[]){2.0, 3.0, -1.0}), 
+                    valfloats(3, (float[]){3.0, -1.0, 0.5}),
+                    valfloats(3, (float[]){0.5, 1.0, 1.0}), 
+                    valfloats(3, (float[]){1.0, 1.0, -1.0})};
+    Value *ys = valfloats(4, (float[]){1.0, -1.0, -1.0, 1.0});
 
     printf("\n --- Training neuron... ---\n");
-    for (int i = 0; i < 20; i++) {
-        /* Value *ypred[4] = {0}; */
-        Value *loss = NULL;
+    Value *params[VALCAP] = {0};
+    for (int i = 0; i < nepoch; i++) {
+        /* loss on the batch */
+        Value *loss = valfloat(0.0);
         for (int j = 0; j < 4; j++) {
             Value *ygt = ys + j;
-            Value *yout = nfwd(n, xs[j], 3);
-
-            Value *neg = valalloc(1);
-            neg->op = VAL_FLOAT;
-            neg->val = -1.0;
-            neg->grad = 0.0;
-            neg->prev1 = NULL;
-            neg->prev2 = NULL;
-
-            Value *negygt = valmul(ygt, neg);
-            Value *diff = valadd(yout, negygt);
-            Value *residual = valmul(diff, diff);
-
-            if (j == 0)
-                loss = residual;
-            else
-                loss = valadd(loss, residual);
+            Value *ypred = nfwd(n, xs[j]);
+            Value *l = valpow(valsub(ypred, ygt), 2);
+            loss = valadd(loss, l);
         }
-        Value *valbuf[VALCAP] = {0};
-        unsigned int nparam = nparams(n, valbuf);
-        for (int i = 0; i < nparam; i++)
-            valbuf[i]->grad = 0.0;
 
+        /* zero grad */
+        unsigned int paramslen = nparams(n, params);
+        for (int i = 0; i < paramslen; i++)
+            params[i]->grad = 0.0;
+
+        /* backward */
         valbwd(loss);
 
-        nparam = nparams(n, valbuf);
-        for (int i = 0; i < nparam; i++)
-            valbuf[i]->val += -0.1 * valbuf[i]->grad;
+        /* optimizer step */
+        paramslen = nparams(n, params);
+        for (int i = 0; i < paramslen; i++)
+            params[i]->val += -0.1 * params[i]->grad;
 
         printf("loss: %.5f\n", loss->val);
-        /* TODO: fix pretty printer for loss */
     }
 
     return EXIT_SUCCESS;

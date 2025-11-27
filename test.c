@@ -11,6 +11,8 @@
 void valalloc_basic(void);
 void valinit_basic(void);
 void valfloat_basic(void);
+void valsub_basic(void);
+void valpow_basic(void);
 void valbwd_basic(void);
 void valbwd_tanh(void);
 void valbwd_selfref(void);
@@ -29,6 +31,8 @@ int main(int argc, char *argv[]) {
     valalloc_basic();
     valinit_basic();
     valfloat_basic();
+    valsub_basic();
+    valpow_basic();
     valbwd_basic();
     valbwd_tanh();
     valbwd_selfref();
@@ -157,6 +161,33 @@ void valfloat_basic() {
         error("valfloat_basic: bad init");
     if (xs[2].prev2 != NULL)
         error("valfloat_basic: bad init");
+
+    pass("");
+}
+
+void valsub_basic() {
+    test("valsub_basic");
+
+    Value *x = valfloat(5.0);
+    Value *y = valfloat(3.0);
+
+    Value *diff = valsub(x, y);
+
+    if (diff->val != 2.0)
+        error("valsub_basic: value is incorrect (is %f, should be %f)", diff->val, 2.0);
+
+    pass("");
+}
+
+void valpow_basic() {
+    test("valpow_basic");
+
+    Value *v = valfloat(2.0);
+
+    Value *cubed = valpow(v, 3);
+
+    if (cubed->val != 8.0)
+        error("valpow_basic: value is incorrect (is %f, should be %f)", cubed->val, 8.0);
 
     pass("");
 }
