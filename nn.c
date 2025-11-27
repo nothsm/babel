@@ -77,10 +77,7 @@ Value *nfwd(Neuron *n, Value *x) {
     for (int i = 0; i < n->nin; i++)
         valassert(x + i);
 
-    Value *out = valalloc(1);
-
-    valinit(out, VAL_FLOAT, 0.0, NULL, NULL);
-
+    Value *out = valfloat(0.0);
     for (int i = 0; i < n->nin; i++)
         out = valadd(out, valmul(n->w + i, x + i));
     out = valtanh(out);

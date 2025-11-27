@@ -467,7 +467,6 @@ void valbwd(Value *v) {
  * - [ ] Add proper string allocation
  * - [ ] Use doubles instead of floats for higher precision
  * - [ ] Use explicitly sized types
- * - [ ] Add valfloat operation to allocate multiple floats
  * - [ ] cool feature: compile the learned algorithm of the model into code
  * - [ ] Systems-level performance optimization
  *   - [ ] DoD
