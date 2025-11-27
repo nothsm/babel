@@ -152,6 +152,7 @@ typedef struct {
 typedef struct {
   Layer **layers;
   unsigned int nin;
+  unsigned int nlayers;
   unsigned int *nouts;
 } MLP;
 
@@ -174,7 +175,7 @@ unsigned int lparams(Layer *l, Value **ret);
 void mlpinit(MLP *mlp);
 MLP *mlpalloc(unsigned int nin, unsigned int *nouts, unsigned int n_nouts);
 void mlpcheck(MLP *mlp);
-void mlpfwd(MLP *mlp, Value *x, Value **ret);
+Value *mlpfwd(MLP *mlp, Value *x);
 unsigned int mlpparams(MLP *mlp, Value **ret);
 
 /* typedef struct { */

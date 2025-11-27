@@ -45,16 +45,21 @@ void engineinit() {
 
 void valcheck(Value *v) {
     assert(v != NULL);
-    assert(v->op == VAL_ADD ||
-           v->op == VAL_MUL ||
-           v->op == VAL_FLOAT ||
-           v->op == VAL_TANH);
-    assert((v->prev1 != NULL && v->prev2 != NULL) ||
-           (v->prev1 != NULL && v->prev2 == NULL) ||
-           (v->prev1 == NULL && v->prev2 == NULL));
+    // if (v->op == VAL_ADD)
+    //     assert(v->prev1 != NULL && v->prev2 != NULL);
+    // else if (v->op == VAL_MUL)
+    //     assert(v->prev1 != NULL && v->prev2 != NULL);
+    // else if (v->op == VAL_FLOAT)
+    //     assert(v->prev1 == NULL && v->prev2 == NULL);
+    // else if (v->op == VAL_TANH)
+    //     assert(v->prev1 != NULL && v->prev2 == NULL);
+    // else
+    //     assert(false);
     assert(v->prev1 != v); /* TODO: Think about this invariant */
     assert(v->prev2 != v);
     assert(v->id < vid);
+    assert(vid <= VALCAP);
+    assert(v->id <= VALCAP);
 }
 
 /* What if I just predefine all the id's? */
@@ -69,6 +74,7 @@ Value *valalloc(unsigned int n) {
         vid += 1;
     }
 
+    assert(vid + n <= VALCAP);
     assert(VALTAB[vid - n].id == oldvid);
     for (int i = 0; i < n; i++)
         assert(VALTAB[oldvid + i].id == oldvid + i);
@@ -496,4 +502,6 @@ void valbwd(Value *v) {
  * 
  * 
  * - If you put these operations in a training loop, you don't want to allocate new memory on each iteration...
+ * - Value is by-default multiple values?
+ * - I don't think I actually need to compute the value in Value? I can always get it from traversing from the root
  */

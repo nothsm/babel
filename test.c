@@ -536,10 +536,14 @@ void lparams_basic() {
 }
 
 void mlpfwd_basic() {
+    test("mlpfwd_basic");
+
     error("mlpfwd_basic: not implemented");
 }
 
 void mlpparams_basic() {
+    test("mlpparams_basic");
+
     error("mlpparams_basic: not implemented");
 }
 

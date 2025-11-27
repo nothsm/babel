@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "babel.h"
 
 #define frand() ((double) rand() / (RAND_MAX + 1.0))
@@ -15,6 +16,7 @@ extern char STRTAB[STRCAP];
 extern unsigned int allocated;
 
 MLP themlp = {0};
+Layer *themlp_layers[LAYCAP] = {0};
 
 double uniform(int lo, int hi) {
     assert(lo < hi);
@@ -48,6 +50,7 @@ void ninit(Neuron *n) {
 
     for (int i = 0; i < n->nin; i++)
         valinit(n->w + i, VAL_FLOAT, uniform(-1, 1), NULL, NULL);
+
     valinit(n->b, VAL_FLOAT, uniform(-1, 1), NULL, NULL);
 
     ncheck(n);
@@ -164,17 +167,55 @@ unsigned int lparams(Layer *l, Value **ret) {
 }
 
 MLP *mlpalloc(unsigned int nin, unsigned int *nouts, unsigned int n_nouts) {
-    themlp.layers[0] = lalloc(1, nin, nouts[0]);
+    assert(nin > 0);
+    assert(nouts != NULL);
+    for (int i = 0; i < n_nouts; i++)
+        assert(nouts[i] > 0);
+    assert(n_nouts > 0);
+
+    memset(&themlp_layers, 0, sizeof(Layer*) * LAYCAP);
+    themlp.layers = themlp_layers;
+
+    themlp.layers[0] = lalloc(1, nin, nouts[0]); 
     for (int i = 0; i < n_nouts - 1; i++)
-        themlp.layers[i] = lalloc(1, nouts[i], nouts[i + 1]);
+        themlp.layers[i + 1] = lalloc(1, nouts[i], nouts[i + 1]);  /* i + 1 since we already set layers[0] */
+
+    themlp.nin = nin;
+    themlp.nlayers = n_nouts;
+    /* TODO: Save nouts in themlp */
+
+    for (int i = 0; i < themlp.nlayers; i++)
+        lcheck(themlp.layers[i]);
 
     return &themlp;
 }
 
-void mlpassert(MLP *mlp) {
-    /* */
+void mlpcheck(MLP *mlp) {
+    /* TODO: add checks */
+    assert(mlp != NULL);
+    assert(mlp->nin > 0);
+    for (int i = 0; i < mlp->nlayers; i++)
+        lcheck(mlp->layers[i]);
 }
 
 void mlpinit(MLP *mlp) {
     assert(mlp != NULL);
+
+    for (int i = 0; i < mlp->nlayers; i++)
+        linit(mlp->layers[i]);
+
+    mlpcheck(mlp);
+}
+
+Value *mlpfwd(MLP *mlp, Value *x) {
+    mlpcheck(mlp);
+
+    for (int i = 0; i < mlp->nlayers; i++) {
+        Value *buf[VALCAP] = {0};
+ 
+        lfwd(mlp->layers[i], x, buf);
+    }
+
+
+    return NULL;
 }
