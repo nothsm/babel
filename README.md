@@ -10,4 +10,4 @@
 ▀▀ ▀▀▀     ▀▀▀▀ ▀▀  ▀▀ ▀▀▀      ▀▀▀▀▀      ▀▀▀▀
 ```
 
-babel speaks all languages
+babel is a high-performance tensor compiler written from scratch in C
