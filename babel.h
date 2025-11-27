@@ -16,7 +16,7 @@
 #define MEMCAP (1024 * 1024 * 1024) /* 256MB mem lim... TODO: decrease this shit! */
 #define ARRCAP 1024 /* TODO: decrease this */
 #define STRCAP (1024 * 32)
-#define VALCAP 2048 /* TODO: decrease this */
+#define VALCAP 4096 /* TODO: decrease this */
 #define NEURCAP 128
 #define LAYCAP 64
 #define RECLIM 32
@@ -160,7 +160,7 @@ void ninit(Neuron *n);
 Neuron *nalloc(unsigned int n, unsigned int nin);
 void ncheck(Neuron *n);
 char *nshow(Neuron *n);
-Value *nfwd(Neuron *n, Value *x);
+Value *nfwd(Neuron *n, Value **x);
 unsigned int nparams(Neuron *n, Value **ret);
 
 /* TODO: Implement these */
@@ -168,14 +168,14 @@ void linit(Layer *l);
 Layer *lalloc(unsigned int n, unsigned int nin, unsigned int nout);
 void lcheck(Layer *l);
 char *lshow(Layer *l);
-unsigned int lfwd(Layer *l, Value *x, Value **ret);
+unsigned int lfwd(Layer *l, Value **x, Value **ret);
 unsigned int lparams(Layer *l, Value **ret);
 
 /* TODO: Implement these */
 void mlpinit(MLP *mlp);
 MLP *mlpalloc(unsigned int nin, unsigned int *nouts, unsigned int n_nouts);
 void mlpcheck(MLP *mlp);
-Value *mlpfwd(MLP *mlp, Value *x);
+Value **mlpfwd(MLP *mlp, Value **x);
 unsigned int mlpparams(MLP *mlp, Value **ret);
 
 /* typedef struct { */

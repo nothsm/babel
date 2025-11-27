@@ -45,16 +45,17 @@ void engineinit() {
 
 void valcheck(Value *v) {
     assert(v != NULL);
-    // if (v->op == VAL_ADD)
-    //     assert(v->prev1 != NULL && v->prev2 != NULL);
-    // else if (v->op == VAL_MUL)
-    //     assert(v->prev1 != NULL && v->prev2 != NULL);
-    // else if (v->op == VAL_FLOAT)
-    //     assert(v->prev1 == NULL && v->prev2 == NULL);
-    // else if (v->op == VAL_TANH)
-    //     assert(v->prev1 != NULL && v->prev2 == NULL);
-    // else
-    //     assert(false);
+    if (v->op == VAL_ADD)
+        // assert(v->prev1 != NULL && v->prev2 != NULL); /* This is buggy because VAL_ADD is equivalent to 0 */
+        assert(true);
+    else if (v->op == VAL_MUL)
+        assert(v->prev1 != NULL && v->prev2 != NULL);
+    else if (v->op == VAL_FLOAT)
+        assert(v->prev1 == NULL && v->prev2 == NULL);
+    else if (v->op == VAL_TANH)
+        assert(v->prev1 != NULL && v->prev2 == NULL);
+    else
+        assert(false);
     assert(v->prev1 != v); /* TODO: Think about this invariant */
     assert(v->prev2 != v);
     assert(v->id < vid);
@@ -496,6 +497,8 @@ void valbwd(Value *v) {
  * - [ ] Use explicitly sized types
  * - [ ] cool feature: compile the learned algorithm of the model into code
  * - [ ] cool feature: implement interesting physics/computational math calculations
+ * - [ ] Make it easy to mix-and-match building blocks to build models
+ * - [ ] What if valfloats just took in a shape?
  * - [ ] Systems-level performance optimization
  *   - [ ] DoD
  *   - [ ] Pooled arena allocation
@@ -504,4 +507,5 @@ void valbwd(Value *v) {
  * - If you put these operations in a training loop, you don't want to allocate new memory on each iteration...
  * - Value is by-default multiple values?
  * - I don't think I actually need to compute the value in Value? I can always get it from traversing from the root
+ * - Not having a length or shape is becoming painful...
  */

@@ -424,7 +424,11 @@ void nfwd_basic() {
     for (int i = 0; i < nin; i++)
         valinit(n->w + i, VAL_FLOAT, pow(-1, i) * (i + 1.0) / 10.0, NULL, NULL);
 
-    Value *x = valfloats(3, (float[]){2.0, 3.0, -1.0});
+    // Value *x = valfloats(3, (float[]){2.0, 3.0, -1.0});
+    Value *x0 = valfloat(2.0);
+    Value *x1 = valfloat(3.0);
+    Value *x2 = valfloat(-1.0);
+    Value *x[3] = {x0, x1, x2};
 
     Value *out = nfwd(n, x);
 
@@ -482,7 +486,11 @@ void lfwd_basic() {
         valinit(l->ns[1].w + i, VAL_FLOAT, pow(-1, (i + 1)) * (i + 1.0) / 10.0, NULL, NULL);
  
 
-    Value *x = valfloats(3, (float[]){2.0, 3.0, -1.0});
+    // Value *x = valfloats(3, (float[]){2.0, 3.0, -1.0});
+    Value *x0 = valfloat(2.0);
+    Value *x1 = valfloat(3.0);
+    Value *x2 = valfloat(-1.0);
+    Value *x[3] = {x0, x1, x2};
 
     Value *out[2] = {0};
     lfwd(l, x, out);

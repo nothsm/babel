@@ -77,14 +77,15 @@ char *nshow(Neuron *n) {
 
 /* pre: len(x) == n->nin (you can't assert this, though) */
 /* TODO: support bias */
-Value *nfwd(Neuron *n, Value *x) {
+/* TODO: Should take in a Value** */
+Value *nfwd(Neuron *n, Value **x) {
     ncheck(n);
     for (int i = 0; i < n->nin; i++)
-        valcheck(x + i);
+        valcheck(x[i]);
 
     Value *out = valfloat(0.0);
     for (int i = 0; i < n->nin; i++)
-        out = valadd(out, valmul(n->w + i, x + i));
+        out = valadd(out, valmul(n->w + i, x[i]));
     out = valtanh(out);
 
     ncheck(n);
@@ -141,10 +142,11 @@ void lcheck(Layer *l) {
         ncheck(l->ns + i);
 }
 
-unsigned int lfwd(Layer *l, Value *x, Value **ret) {
+/* TODO: This should take in a Value** */
+unsigned int lfwd(Layer *l, Value **x, Value **ret) {
     lcheck(l);
     for (int i = 0; i < l->nin; i++)
-        valcheck(x + i);
+        valcheck(x[i]);
 
     for (int i = 0; i < l->nout; i++)
         ret[i] = nfwd(l->ns + i, x);
@@ -191,7 +193,6 @@ MLP *mlpalloc(unsigned int nin, unsigned int *nouts, unsigned int n_nouts) {
 }
 
 void mlpcheck(MLP *mlp) {
-    /* TODO: add checks */
     assert(mlp != NULL);
     assert(mlp->nin > 0);
     for (int i = 0; i < mlp->nlayers; i++)
@@ -207,15 +208,32 @@ void mlpinit(MLP *mlp) {
     mlpcheck(mlp);
 }
 
-Value *mlpfwd(MLP *mlp, Value *x) {
+Value **mlpfwd(MLP *mlp, Value **x) {
     mlpcheck(mlp);
 
-    for (int i = 0; i < mlp->nlayers; i++) {
-        Value *buf[VALCAP] = {0};
- 
-        lfwd(mlp->layers[i], x, buf);
-    }
+    Value *out0[VALCAP] = {0};
+    lfwd(mlp->layers[0], x, out0);
 
+    printf("%s\n", valshow(out0[0]));
+    printf("%s\n", valshow(out0[1]));
+    printf("%s\n", valshow(out0[2]));
+    printf("%s\n", valshow(out0[3]));
+
+    assert(false);
+
+    Value *out1[VALCAP] = {0};
+    lfwd(mlp->layers[1], out0, out1);
+
+
+    // lfwd(mlp->layers[1], x, out);
+    // x = out;
+    // printf("%s\n", valshow(out));
+    // for (int i = 0; i < mlp->nlayers; i++) { 
+    //     lfwd(mlp->layers[i], x, out);
+    //     x = out;
+    // }
+
+    // valcheck(out);
 
     return NULL;
 }
