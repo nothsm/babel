@@ -14,13 +14,15 @@ unsigned int nlay;
 extern char STRTAB[STRCAP];
 extern unsigned int allocated;
 
+MLP themlp = {0};
+
 double uniform(int lo, int hi) {
     assert(lo < hi);
 
     return ((hi - lo) * frand()) + lo;
 }
 
-void nassert(Neuron *n) {
+void ncheck(Neuron *n) {
     assert(n != NULL);
     assert(n->nin > 0);
 }
@@ -48,7 +50,7 @@ void ninit(Neuron *n) {
         valinit(n->w + i, VAL_FLOAT, uniform(-1, 1), NULL, NULL);
     valinit(n->b, VAL_FLOAT, uniform(-1, 1), NULL, NULL);
 
-    nassert(n);
+    ncheck(n);
 }
 
 /* TODO: generalize this to > 2 input dims */
@@ -58,7 +60,7 @@ char *nshow(Neuron *n) {
     char *s;
 
     assert(n->nin >= 2);
-    nassert(n);
+    ncheck(n);
 
     oldalloc = allocated;
 
@@ -73,23 +75,23 @@ char *nshow(Neuron *n) {
 /* pre: len(x) == n->nin (you can't assert this, though) */
 /* TODO: support bias */
 Value *nfwd(Neuron *n, Value *x) {
-    nassert(n);
+    ncheck(n);
     for (int i = 0; i < n->nin; i++)
-        valassert(x + i);
+        valcheck(x + i);
 
     Value *out = valfloat(0.0);
     for (int i = 0; i < n->nin; i++)
         out = valadd(out, valmul(n->w + i, x + i));
     out = valtanh(out);
 
-    nassert(n);
-    valassert(out);
+    ncheck(n);
+    valcheck(out);
 
     return out;
 }
 
 unsigned int nparams(Neuron *n, Value **ret) {
-    nassert(n);
+    ncheck(n);
     assert(ret != NULL);
 
     for (int i = 0; i < n->nin; i++)
@@ -125,33 +127,33 @@ void linit(Layer *l) {
     for (int i = 0; i < l->nout; i++)
         ninit(l->ns + i);
 
-    lassert(l);
+    lcheck(l);
 }
 
-void lassert(Layer *l) {
+void lcheck(Layer *l) {
     assert(l != NULL);
     assert(l->nin > 0);
     assert(l->nout > 0);
     for (int i = 0; i < l->nout; i++)
-        nassert(l->ns + i);
+        ncheck(l->ns + i);
 }
 
 unsigned int lfwd(Layer *l, Value *x, Value **ret) {
-    lassert(l);
+    lcheck(l);
     for (int i = 0; i < l->nin; i++)
-        valassert(x + i);
+        valcheck(x + i);
 
     for (int i = 0; i < l->nout; i++)
         ret[i] = nfwd(l->ns + i, x);
 
     for (int i = 0; i < l->nout; i++)
-        valassert(ret[i]);
+        valcheck(ret[i]);
 
     return l->nout;
 }
 
 unsigned int lparams(Layer *l, Value **ret) {
-    lassert(l);
+    lcheck(l);
     assert(ret != NULL);
 
     unsigned int n = 0;
@@ -159,4 +161,18 @@ unsigned int lparams(Layer *l, Value **ret) {
         n += nparams(l->ns + i, ret + n);
 
     return n;
+}
+
+void mlpalloc(unsigned int nin, unsigned int *nouts, unsigned int n_nouts) {
+    themlp.layers[0] = lalloc(1, nin, nouts[0]);
+    for (int i = 0; i < n_nouts - 1; i++)
+        themlp.layers[i] = lalloc(1, nouts[i], nouts[i + 1]);
+}
+
+void mlpassert(MLP *mlp) {
+    /* */
+}
+
+void mlpinit(MLP *mlp) {
+    assert(mlp != NULL);
 }

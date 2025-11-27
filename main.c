@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
 
     /* TODO: make it easy to construct 2d data? */
 
-    unsigned int nepoch = 20;
+    unsigned int nepoch = 32;
 
     Value *xs[4] = {valfloats(3, (float[]){2.0, 3.0, -1.0}), 
                     valfloats(3, (float[]){3.0, -1.0, 0.5}),
@@ -27,9 +27,10 @@ int main(int argc, char **argv) {
 
     printf("\n --- Training neuron... ---\n");
     Value *params[VALCAP] = {0};
+    Value *loss = valfloat(0.0);
     for (int i = 0; i < nepoch; i++) {
         /* loss on the batch */
-        Value *loss = valfloat(0.0);
+        valinit(loss, VAL_FLOAT, 0.0, NULL, NULL);
         for (int j = 0; j < 4; j++) {
             Value *ygt = ys + j;
             Value *ypred = nfwd(n, xs[j]);

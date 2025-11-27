@@ -43,7 +43,7 @@ void engineinit() {
     nlay = 0;
 }
 
-void valassert(Value *v) {
+void valcheck(Value *v) {
     assert(v != NULL);
     assert(v->op == VAL_ADD ||
            v->op == VAL_MUL ||
@@ -88,14 +88,14 @@ Value *valinit(Value *v, ValueType op, float val, Value *prev1, Value *prev2) {
     v->prev1 = prev1;
     v->prev2 = prev2;
 
-    valassert(v);
+    valcheck(v);
 
     return v;
 }
 
 bool valeq(Value *v1, Value *v2) {
-    valassert(v1);
-    valassert(v2);
+    valcheck(v1);
+    valcheck(v2);
 
     bool is_op_eq = v1->op == v2->op;
     bool is_val_eq = v1->val == v2->val;
@@ -165,7 +165,7 @@ char *valshow(Value *v) {
     int n;
     unsigned int old_allocated;
 
-    valassert(v);
+    valcheck(v);
 
     if (v->prev1 != NULL && v->prev2 != NULL) {
         char *op = vtshow(v->op);
@@ -230,7 +230,7 @@ char *valsexpr(Value *v) {
     int n;
     unsigned int old_allocated;
 
-    valassert(v);
+    valcheck(v);
 
     if (v->prev1 != NULL && v->prev2 != NULL) {
         char *op = vtshow(v->op);
@@ -297,7 +297,7 @@ Value *valfloats(unsigned int n, float *xs) {
         valinit(vs + i, VAL_FLOAT, xs[i], NULL, NULL);
 
     for (int i = 0; i < n; i++)
-        valassert(vs + i);
+        valcheck(vs + i);
 
     return vs;
 }
@@ -308,8 +308,8 @@ Value *valfloat(float x) {
 }
 
 Value *valadd(Value *x, Value *y) {
-    valassert(x);
-    valassert(y);
+    valcheck(x);
+    valcheck(y);
 
     Value *ret = valalloc(1);
 
@@ -324,8 +324,8 @@ Value *valadd(Value *x, Value *y) {
 }
 
 Value *valmul(Value *x, Value *y) {
-    valassert(x);
-    valassert(y);
+    valcheck(x);
+    valcheck(y);
 
     Value *ret = valalloc(1);
 
@@ -340,32 +340,32 @@ Value *valmul(Value *x, Value *y) {
 }
 
 Value *valsub(Value *x, Value *y) {
-    valassert(x);
-    valassert(y);
+    valcheck(x);
+    valcheck(y);
 
     Value *ret = valadd(x, valmul(valfloat(-1.0), y));
 
-    valassert(ret);
+    valcheck(ret);
 
     return ret;
 }
 
 Value *valpow(Value *v, unsigned int n) {
     assert(n > 0);
-    valassert(v);
+    valcheck(v);
 
     /* TODO: Do I even need to allocate this guy? */
     Value *out = valfloat(1.0);
     for (int i = 0; i < n; i++)
         out = valmul(out, v);
 
-    valassert(out);
+    valcheck(out);
 
     return out;
 }
 
 Value *valtanh(Value *x) {
-    valassert(x);
+    valcheck(x);
 
     Value *ret = valalloc(1);
 
@@ -380,37 +380,37 @@ Value *valtanh(Value *x) {
 }
 
 void valaddbwd(Value *v) {
-    valassert(v);
+    valcheck(v);
     assert(v->op == VAL_ADD);
 
     v->prev1->grad += v->grad;
     v->prev2->grad += v->grad;
 
-    valassert(v);
+    valcheck(v);
 }
 
 void valmulbwd(Value *v) {
-    valassert(v);
+    valcheck(v);
     assert(v->op == VAL_MUL);
 
     v->prev1->grad += v->grad * v->prev2->val;
     v->prev2->grad += v->grad * v->prev1->val;
 
-    valassert(v);
+    valcheck(v);
 }
 
 void valtanhbwd(Value *v) {
-    valassert(v);
+    valcheck(v);
     assert(v->op == VAL_TANH);
     assert(v->prev2 == NULL);
 
     v->prev1->grad += v->grad * (1 - (v->val * v->val));
 
-    valassert(v);
+    valcheck(v);
 }
 
 void valbwd1(Value *v) {
-    valassert(v);
+    valcheck(v);
 
     switch (v->op) {
         case VAL_ADD:
@@ -427,7 +427,7 @@ void valbwd1(Value *v) {
             assert(false);
     }
 
-    valassert(v);
+    valcheck(v);
 }
 
 void _valtsort(Value *v, Value **ret, unsigned int *nret, bool *seen) {
@@ -448,17 +448,17 @@ unsigned int valtsort(Value *v, Value **ret) {
     unsigned int n = 0;
     bool seen[VALCAP] = {0};
 
-    valassert(v);
+    valcheck(v);
 
     _valtsort(v, ret, &n, seen);
 
-    valassert(v);
+    valcheck(v);
 
     return n;
 }
 
 void valbwd(Value *v) {
-    valassert(v);
+    valcheck(v);
     assert(v->grad == 0.0); /* shouldnt use == to compare floats */
 
     Value *topo[VALCAP] = {0};
@@ -468,7 +468,7 @@ void valbwd(Value *v) {
     for (int i = ntopo - 1; i >= 0; i--)
         valbwd1(topo[i]);
 
-    valassert(v);
+    valcheck(v);
 }
 
 /*

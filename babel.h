@@ -121,7 +121,7 @@ void stdbg(unsigned int, unsigned int);
 
 Value *valinit(Value *, ValueType, float, Value *, Value *);
 Value *valalloc(unsigned int n);
-void valassert(Value *);
+void valcheck(Value *);
 bool valeq(Value *, Value *);
 char *valshow(Value *);
 char *valsexpr(Value *);
@@ -149,9 +149,15 @@ typedef struct {
   unsigned int nout;
 } Layer;
 
+typedef struct {
+  Layer **layers;
+  unsigned int nin;
+  unsigned int *nouts;
+} MLP;
+
 void ninit(Neuron *n);
 Neuron *nalloc(unsigned int n, unsigned int nin);
-void nassert(Neuron *n);
+void ncheck(Neuron *n);
 char *nshow(Neuron *n);
 Value *nfwd(Neuron *n, Value *x);
 unsigned int nparams(Neuron *n, Value **ret);
@@ -159,10 +165,17 @@ unsigned int nparams(Neuron *n, Value **ret);
 /* TODO: Implement these */
 void linit(Layer *l);
 Layer *lalloc(unsigned int n, unsigned int nin, unsigned int nout);
-void lassert(Layer *l);
+void lcheck(Layer *l);
 char *lshow(Layer *l);
 unsigned int lfwd(Layer *l, Value *x, Value **ret);
 unsigned int lparams(Layer *l, Value **ret);
+
+/* TODO: Implement these */
+void mlpinit(MLP *mlp);
+void mlpalloc(unsigned int nin, unsigned int *nouts, unsigned int n_nouts);
+void mlp(MLP *mlp);
+void mlpfwd(MLP *mlp, Value *x, Value **ret);
+unsigned int mlpparams(MLP *mlp, Value **ret);
 
 /* typedef struct { */
 /*   unsigned int *dims; */
