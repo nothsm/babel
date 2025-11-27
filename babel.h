@@ -125,6 +125,8 @@ void valassert(Value *);
 bool valeq(Value *, Value *);
 char *valshow(Value *);
 char *valsexpr(Value *);
+Value *valfloats(unsigned int, float *);
+Value *valfloat(float);
 Value *valmul(Value *, Value *);
 Value *valadd(Value *, Value *);
 Value *valtanh(Value *);

@@ -10,7 +10,7 @@
 
 void valalloc_basic(void);
 void valinit_basic(void);
-// void valfloat_basic(void);
+void valfloat_basic(void);
 void valbwd_basic(void);
 void valbwd_tanh(void);
 void valbwd_selfref(void);
@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 
     valalloc_basic();
     valinit_basic();
-    // valfloat_basic();
+    valfloat_basic();
     valbwd_basic();
     valbwd_tanh();
     valbwd_selfref();
@@ -104,6 +104,60 @@ void valinit_basic() {
         error("valinit_basic: bad initialization");
     if (v3.prev2 != &v2)
         error("valinit_basic: bad initialization");
+
+    pass("");
+}
+
+void valfloat_basic() {
+    test("valfloat_basic");
+
+    Value *x = valfloat(1.0);
+    if (x->op != VAL_FLOAT)
+        error("valfloat_basic: bad init");
+    if (x->val != 1.0)
+        error("valfloat_basic: bad init");
+    if (x->grad != 0.0)
+        error("valfloat_basic: bad init");
+    if (x->prev1 != NULL)
+        error("valfloat_basic: bad init");
+    if (x->prev2 != NULL)
+        error("valfloat_basic: bad init");
+
+    float data[3] = {2.0, 4.0, 6.0};
+    Value *xs = valfloats(3, data); /* TODO: Is there a way to pass in the array directly? */
+
+    if (xs[0].op != VAL_FLOAT)
+        error("valfloat_basic: bad init");
+    if (xs[0].val != 2.0)
+        error("valfloat_basic: bad init");
+    if (xs[0].grad != 0.0)
+        error("valfloat_basic: bad init");
+    if (xs[0].prev1 != NULL)
+        error("valfloat_basic: bad init");
+    if (xs[0].prev2 != NULL)
+        error("valfloat_basic: bad init");
+
+    if (xs[1].op != VAL_FLOAT)
+        error("valfloat_basic: bad init");
+    if (xs[1].val != 4.0)
+        error("valfloat_basic: bad init");
+    if (xs[1].grad != 0.0)
+        error("valfloat_basic: bad init");
+    if (xs[1].prev1 != NULL)
+        error("valfloat_basic: bad init");
+    if (xs[1].prev2 != NULL)
+        error("valfloat_basic: bad init");
+
+    if (xs[2].op != VAL_FLOAT)
+        error("valfloat_basic: bad init");
+    if (xs[2].val != 6.0)
+        error("valfloat_basic: bad init");
+    if (xs[2].grad != 0.0)
+        error("valfloat_basic: bad init");
+    if (xs[2].prev1 != NULL)
+        error("valfloat_basic: bad init");
+    if (xs[2].prev2 != NULL)
+        error("valfloat_basic: bad init");
 
     pass("");
 }

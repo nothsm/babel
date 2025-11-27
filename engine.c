@@ -289,7 +289,17 @@ char *valsexpr(Value *v) {
 
 /* TODO */
 Value *valfloats(unsigned int n, float *xs) {
+    assert(n > 0);
+    assert(xs != NULL);
 
+    Value *vs = valalloc(n);
+    for (int i = 0; i < n; i++)
+        valinit(vs + i, VAL_FLOAT, xs[i], NULL, NULL);
+
+    for (int i = 0; i < n; i++)
+        valassert(vs + i);
+
+    return vs;
 }
 
 /* TODO */
