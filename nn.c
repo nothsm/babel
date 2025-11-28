@@ -212,19 +212,34 @@ void mlpinit(MLP *mlp) {
 Value **mlpfwd(MLP *mlp, Value **x) {
     mlpcheck(mlp);
 
-    Value *out0[VALCAP] = {0};
-    lfwd(mlp->layers[0], x, out0);
+    // Value *out0[VALCAP] = {0};
+    // lfwd(mlp->layers[0], x, out0);
 
-    // printf("%s\n", valshow(out0[0]));
-    // printf("%s\n", valshow(out0[1]));
-    // printf("%s\n", valshow(out0[2]));
-    // printf("%s\n", valshow(out0[3]));
+    // Value *out1[VALCAP] = {0};
+    // lfwd(mlp->layers[1], out0, out1);
 
-    Value *out1[VALCAP] = {0};
-    lfwd(mlp->layers[1], out0, out1);
+    // Value *out2[VALCAP] = {0};
+    // lfwd(mlp->layers[2], out1, out2);
 
-    Value *out2[VALCAP] = {0};
-    lfwd(mlp->layers[2], out1, out2);
+    Value **xtmp[LAYCAP] = {0};
+    xtmp[0] = x;
+    for (int i = 1; i < mlp->nlayers + 1; i++)
+        xtmp[i] = calloc(mlp->layers[i - 1]->nin, sizeof(Value*));
+
+    printf("xtmp[0] = %p\n", xtmp[0]);
+    printf("xtmp[1] = %p\n", xtmp[1]);
+    printf("xtmp[2] = %p\n", xtmp[2]);
+
+    assert(false);
+    // printf("xtmp[3] = %p\n", xtmp[3]);
+    
+    for (int i = 0; i < mlp->nlayers; i++) {
+        unsigned int dim = lfwd(mlp->layers[i], xtmp[i], xtmp[i + 1]);
+        // memcpy(x, buf, sizeof(Value*) * dim);
+        // x = buf;
+    }
+
+    assert(false);
 
     // lfwd(mlp->layers[1], x, out);
     // x = out;
@@ -234,9 +249,13 @@ Value **mlpfwd(MLP *mlp, Value **x) {
     //     x = out;
     // }
 
-    valcheck(out2[0]);
+    // valcheck(out2[0]);
+    // valcheck(out[0]);
+    valcheck(x);
 
-    return out2;
+    return x;
+
+    // return out2;
 }
 
 unsigned int mlpparams(MLP *mlp, Value **ret) {

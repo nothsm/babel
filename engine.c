@@ -22,13 +22,13 @@ extern Layer LAYTAB[LAYCAP];
 extern unsigned int nlay;
 
 void stdbg(unsigned int beg, unsigned int end) {
-    for (int i = beg; i < end; i++)
+    for (unsigned int i = beg; i < end; i++)
         printf("%d [%p]: %c\n", i, STRTAB + i, STRTAB[i]);
 }
 
 /* TODO: How do I make sure this is called before any other operation? */
 void engineinit() {
-    srand(time(NULL)); /* TODO: use a proper seed */
+    srand((unsigned int)time(NULL)); /* TODO: use a proper seed */
 
     memset(STRTAB, 0, STRCAP);
     allocated = 0;
@@ -77,7 +77,7 @@ Value *valalloc(unsigned int n) {
 
     assert(vid + n <= VALCAP);
     assert(VALTAB[vid - n].id == oldvid);
-    for (int i = 0; i < n; i++)
+    for (unsigned int i = 0; i < n; i++)
         assert(VALTAB[oldvid + i].id == oldvid + i);
 
     return VALTAB + (vid - n);
@@ -125,6 +125,7 @@ bool valeq(Value *v1, Value *v2) {
 
 char *vtshow(ValueType vt) {
     int n;
+    unsigned int unsigned_n;
     unsigned int old_allocated = allocated;
 
     switch (vt) {
@@ -132,33 +133,45 @@ char *vtshow(ValueType vt) {
             n = snprintf(STRTAB + allocated, STRCAP, "%s", "+"); /* TODO: refactor global strtable printing */
 
             assert(n >= 0);
-            assert(allocated + n + 1 < STRCAP);
 
-            allocated += n + 1;
+            unsigned_n = (unsigned int)n;
+
+            assert(allocated + unsigned_n + 1 < STRCAP);
+
+            allocated += unsigned_n + 1;
             return STRTAB + old_allocated;
         case VAL_MUL:
             n = snprintf(STRTAB + allocated, STRCAP, "%s", "*");
 
             assert(n >= 0);
-            assert(allocated + n + 1 < STRCAP);
 
-            allocated += n + 1;
+            unsigned_n = (unsigned int)n;
+
+            assert(allocated + unsigned_n + 1 < STRCAP);
+
+            allocated += unsigned_n + 1;
             return STRTAB + old_allocated;
         case VAL_TANH:
             n = snprintf(STRTAB + allocated, STRCAP, "%s", "tanh");
 
             assert(n >= 0);
-            assert(allocated + n + 1 < STRCAP);
 
-            allocated += n + 1;
+            unsigned_n = (unsigned int)n;
+
+            assert(allocated + unsigned_n + 1 < STRCAP);
+
+            allocated += unsigned_n + 1;
             return STRTAB + old_allocated;
         case VAL_FLOAT:
             n = snprintf(STRTAB + allocated, STRCAP, "%s", "float");
 
             assert(n >= 0);
-            assert(allocated + n + 1 < STRCAP);
 
-            allocated += n + 1;
+            unsigned_n = (unsigned int)n;
+
+            assert(allocated + unsigned_n + 1 < STRCAP);
+
+            allocated += unsigned_n + 1;
             return STRTAB + old_allocated;
         default:
             assert(false);
@@ -170,6 +183,7 @@ char *vtshow(ValueType vt) {
 /* TODO: Fix this kludge */
 char *valshow(Value *v) {
     int n;
+    unsigned int unsigned_n;
     unsigned int old_allocated;
 
     valcheck(v);
@@ -190,9 +204,12 @@ char *valshow(Value *v) {
                  v->id);
 
         assert(n >= 0);
-        assert(allocated + n + 1 < STRCAP);
 
-        allocated += n + 1;
+        unsigned_n = (unsigned int)n;
+
+        assert(allocated + unsigned_n + 1 < STRCAP);
+
+        allocated += unsigned_n + 1;
         return STRTAB + old_allocated;
     } else if (v->prev1 != NULL && v->prev2 == NULL) {
         char *op = vtshow(v->op);
@@ -208,9 +225,12 @@ char *valshow(Value *v) {
                  v->id);
 
         assert(n >= 0);
-        assert(allocated + n + 1 < STRCAP);
 
-        allocated += n + 1;
+        unsigned_n = (unsigned int)n;
+
+        assert(allocated + unsigned_n + 1 < STRCAP);
+
+        allocated += unsigned_n + 1;
         return STRTAB + old_allocated;
     } else if (v->prev1 == NULL && v->prev2 == NULL) {
         char *op = vtshow(v->op);
@@ -224,9 +244,12 @@ char *valshow(Value *v) {
                  v->id);
 
         assert(n >= 0);
-        assert(allocated + n + 1 < STRCAP);
 
-        allocated += n + 1;
+        unsigned_n = (unsigned int)n;
+
+        assert(allocated + unsigned_n + 1 < STRCAP);
+
+        allocated += unsigned_n + 1;
         return STRTAB + old_allocated;
     } else
         assert(false);
@@ -235,6 +258,7 @@ char *valshow(Value *v) {
 /* TODO: Fix this kludge */
 char *valsexpr(Value *v) {
     int n;
+    unsigned int unsigned_n;
     unsigned int old_allocated;
 
     valcheck(v);
@@ -254,9 +278,12 @@ char *valsexpr(Value *v) {
                  v->grad);
 
         assert(n >= 0);
-        assert(allocated + n + 1 < STRCAP);
 
-        allocated += n + 1;
+        unsigned_n = (unsigned int)n;
+
+        assert(allocated + unsigned_n + 1 < STRCAP);
+
+        allocated += unsigned_n + 1;
         return STRTAB + old_allocated;
     } else if (v->prev1 != NULL && v->prev2 == NULL) {
         char *op = vtshow(v->op);
@@ -271,9 +298,12 @@ char *valsexpr(Value *v) {
                  v->grad);
 
         assert(n >= 0);
-        assert(allocated + n + 1 < STRCAP);
 
-        allocated += n + 1;
+        unsigned_n = (unsigned int)n;
+
+        assert(allocated + unsigned_n + 1 < STRCAP);
+
+        allocated += unsigned_n + 1;
         return STRTAB + old_allocated;
     } else if (v->prev1 == NULL && v->prev2 == NULL) {
         char *op = vtshow(v->op);
@@ -286,9 +316,12 @@ char *valsexpr(Value *v) {
                  v->grad);
 
         assert(n >= 0);
-        assert(allocated + n + 1 < STRCAP);
 
-        allocated += n + 1;
+        unsigned_n = (unsigned int)n;
+
+        assert(allocated + unsigned_n + 1 < STRCAP);
+
+        allocated += unsigned_n + 1;
         return STRTAB + old_allocated;
     } else
         assert(false);
@@ -377,7 +410,7 @@ Value *valtanh(Value *x) {
     Value *ret = valalloc(1);
 
     ValueType op = VAL_TANH;
-    float val = (exp(2 * x->val) - 1) / (exp(2 * x->val) + 1);
+    float val = ((float)exp(2 * x->val) - 1) / ((float)exp(2 * x->val) + 1);
     Value *prev1 = x;
     Value *prev2 = NULL;
 
@@ -471,8 +504,10 @@ void valbwd(Value *v) {
     Value *topo[VALCAP] = {0};
     unsigned int ntopo = valtsort(v, topo);
 
+    assert(ntopo > 0);
+
     v->grad = 1.0;
-    for (int i = ntopo - 1; i >= 0; i--)
+    for (int i = (int)ntopo - 1; i >= 0; i--)
         valbwd1(topo[i]);
 
     valcheck(v);
@@ -510,6 +545,7 @@ void valbwd(Value *v) {
  * - [ ] feature: use program synthesis + RL for the kernel search 
  * - [ ] feature: add cool concurrency/parallelism
  * - [ ] feature: program synthesis building block library
+ * - [ ] feature: compile the program directly down to hardware/verilog
  * - [ ] demo: monte carlo calculations
  * - [ ] demo: interesting physics/math computations
  * - [ ] demo: easy to implement frontier papers
