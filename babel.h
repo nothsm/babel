@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdint.h>
 
 #define BABEL_VERSION "0.1.0"
 #define BABEL_DATE "2025-10-06"
@@ -16,7 +17,7 @@
 #define MEMCAP (1024 * 1024 * 1024) /* 256MB mem lim... TODO: decrease this shit! */
 #define ARRCAP 1024 /* TODO: decrease this */
 #define STRCAP (1024 * 32)
-#define VALCAP 16384 /* TODO: decrease this */
+#define VALCAP 32768 /* TODO: decrease this */
 #define NEURCAP 128
 #define LAYCAP 64
 #define RECLIM 32
@@ -115,11 +116,15 @@ struct Value {
     Value *prev2;
 };
 
+typedef struct {
+  uint16_t index;
+} ValueHandle;
+
 void engineinit(void);
 
 void stdbg(unsigned int, unsigned int);
 
-Value *valinit(Value *, ValueType, float, Value *, Value *);
+void valinit(Value *, ValueType, float, Value *, Value *);
 Value *valalloc(unsigned int n);
 void valcheck(Value *);
 bool valeq(Value *, Value *);

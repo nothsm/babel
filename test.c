@@ -254,7 +254,7 @@ void valbwd_tanh() {
     Value *x2 = valfloat(0.0);
     Value *w1 = valfloat(-3.0);
     Value *w2 = valfloat(1.0);
-    Value *b  = valfloat(6.8813735870195432);
+    Value *b  = valfloat(6.8813735870195432f);
 
     Value *x1w1 = valmul(x1, w1);
     Value *x2w2 = valmul(x2, w2);
@@ -297,12 +297,12 @@ void valbwd_selfref() {
     for (int i = 0; i < 3; i++)
         x = valtanh(x);
 
-    if (!feq(x->val, 0.5662699762))
-        error("valbwd_selfref: value is incorrect (is %f, should be %f)", x->val, 0.566269976);
-    if (!feq(x->prev1->val, 0.642014992))
-        error("valbwd_selfref: value is incorrect (is %f, should be %f)", x->prev1->val, 0.642014992);
-    if (!feq(x->prev1->prev1->val, 0.761594156))
-        error("valbwd_selfref: value is incorrect (is %f, should be %f)", x->prev1->prev1->val, 0.761594156);
+    if (!feq(x->val, 0.5662699762f))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", x->val, 0.566269976f);
+    if (!feq(x->prev1->val, 0.642014992f))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", x->prev1->val, 0.642014992f);
+    if (!feq(x->prev1->prev1->val, 0.761594156f))
+        error("valbwd_selfref: value is incorrect (is %f, should be %f)", x->prev1->prev1->val, 0.761594156f);
     if (!feq(x->prev1->prev1->prev1->val, 1.0))
         error("valbwd_selfref: value is incorrect (is %f, should be %f)", x->prev1->prev1->prev1->val, 1.0);
 
@@ -310,12 +310,12 @@ void valbwd_selfref() {
 
     if (!feq(x->grad, 1.0))
         error("valbwd_selfref: grad is incorrect (is %f, should be %f)", x->grad, 1.0);
-    if (!feq(x->prev1->grad, 0.6793383143))
-        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", x->prev1->grad, 0.6793383143);
-    if (!feq(x->prev1->prev1->grad, 0.3993264401))
-        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", x->prev1->prev1->grad, 0.3993264401);
-    if (!feq(x->prev1->prev1->prev1->grad, 0.1677068588))
-        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", x->prev1->prev1->prev1->grad, 0.1677068588);
+    if (!feq(x->prev1->grad, 0.6793383143f))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", x->prev1->grad, 0.6793383143f);
+    if (!feq(x->prev1->prev1->grad, 0.3993264401f))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", x->prev1->prev1->grad, 0.3993264401f);
+    if (!feq(x->prev1->prev1->prev1->grad, 0.1677068588f))
+        error("valbwd_selfref: grad is incorrect (is %f, should be %f)", x->prev1->prev1->prev1->grad, 0.1677068588f);
 
     /* repeated add */
     Value *xs = valfloats(3, (float[]){1.0, 2.0, 3.0});
@@ -422,7 +422,7 @@ void nfwd_basic() {
     ninit(n);
 
     for (int i = 0; i < nin; i++)
-        valinit(n->w + i, VAL_FLOAT, pow(-1, i) * (i + 1.0) / 10.0, NULL, NULL);
+        valinit(n->w + i, VAL_FLOAT, (float)(pow(-1, i) * (i + 1.0) / 10.0), NULL, NULL);
 
     // Value *x = valfloats(3, (float[]){2.0, 3.0, -1.0});
     Value *x0 = valfloat(2.0);
@@ -432,8 +432,8 @@ void nfwd_basic() {
 
     Value *out = nfwd(n, x);
 
-    if (!feq(out->val, -0.6043677771))
-        error("nfwd_basic: forward pass incorrect (is %f, should be %f)", out->val, -0.6043677771);
+    if (!feq(out->val, -0.6043677771f))
+        error("nfwd_basic: forward pass incorrect (is %f, should be %f)", out->val, -0.6043677771f);
     if (!feq(out->grad, 0.0))
         error("nfwd_basic: gradient should be 0 after forward pass");
 
@@ -450,7 +450,7 @@ void nparams_basic() {
 
     /* initialize first neuron to [0.1, -0.2, 0.3] */
     for (int i = 0; i < nin; i++)
-        valinit(n->w + i, VAL_FLOAT, pow(-1, i) * (i + 1.0) / 10.0, NULL, NULL);
+        valinit(n->w + i, VAL_FLOAT, (float)(pow(-1, i) * (i + 1.0) / 10.0), NULL, NULL);
  
     Value *buf[VALCAP] = {0};
     unsigned int len = nparams(n, buf);
@@ -458,11 +458,11 @@ void nparams_basic() {
     if (!(len == 4))
         error("nparams_basic: number of parameters is incorrect (is %d, should be %d)", len, 4);
 
-    if (!feq(buf[0]->val, 0.1))
+    if (!feq(buf[0]->val, 0.1f))
         error("nparams_basic: param is incorrect (is %f, should be %f)", buf[0]->val, 0.1);
-    if (!feq(buf[1]->val, -0.2))
+    if (!feq(buf[1]->val, -0.2f))
         error("nparams_basic: param is incorrect (is %f, should be %f)", buf[1]->val, -0.2);
-    if (!feq(buf[2]->val, 0.3))
+    if (!feq(buf[2]->val, 0.3f))
         error("nparams_basic: param is incorrect (is %f, should be %f)", buf[2]->val, 0.3);
 
     pass("");
@@ -479,11 +479,11 @@ void lfwd_basic() {
 
     /* initialize first neuron to [0.1, -0.2, 0.3] */
     for (int i = 0; i < nin; i++)
-        valinit(l->ns[0].w + i, VAL_FLOAT, pow(-1, i) * (i + 1.0) / 10.0, NULL, NULL);
+        valinit(l->ns[0].w + i, VAL_FLOAT, (float)(pow(-1, i) * (i + 1.0) / 10.0), NULL, NULL);
     
     /* initialize second neuron to [-0.1, 0.2, -0.3] */
     for (int i = 0; i < nin; i++)
-        valinit(l->ns[1].w + i, VAL_FLOAT, pow(-1, (i + 1)) * (i + 1.0) / 10.0, NULL, NULL);
+        valinit(l->ns[1].w + i, VAL_FLOAT, (float)(pow(-1, (i + 1)) * (i + 1.0) / 10.0), NULL, NULL);
  
 
     // Value *x = valfloats(3, (float[]){2.0, 3.0, -1.0});
@@ -495,10 +495,10 @@ void lfwd_basic() {
     Value *out[2] = {0};
     lfwd(l, x, out);
 
-    if (!feq(out[0]->val, -0.6043677771))
-        error("lfwd_basic: forward pass incorrect (is %f, should be %f)", out[0]->val, -0.6043677771);
-    if (!feq(out[1]->val, 0.6043677771))
-        error("lfwd_basic: forward pass incorrect (is %f, should be %f)", out[0]->val, 0.6043677771);
+    if (!feq(out[0]->val, -0.6043677771f))
+        error("lfwd_basic: forward pass incorrect (is %f, should be %f)", out[0]->val, -0.6043677771f);
+    if (!feq(out[1]->val, 0.6043677771f))
+        error("lfwd_basic: forward pass incorrect (is %f, should be %f)", out[0]->val, 0.6043677771f);
 
     pass("");
 }
@@ -515,11 +515,11 @@ void lparams_basic() {
 
     /* initialize first neuron to [0.1, -0.2, 0.3] */
     for (int i = 0; i < nin; i++)
-        valinit(l->ns[0].w + i, VAL_FLOAT, pow(-1, i) * (i + 1.0) / 10.0, NULL, NULL);
+        valinit(l->ns[0].w + i, VAL_FLOAT, (float)(pow(-1, i) * (i + 1.0) / 10.0), NULL, NULL);
  
     /* initialize second neuron to [-0.1, 0.2, -0.3] */
     for (int i = 0; i < nin; i++)
-        valinit(l->ns[1].w + i, VAL_FLOAT, pow(-1, (i + 1)) * (i + 1.0) / 10.0, NULL, NULL);
+        valinit(l->ns[1].w + i, VAL_FLOAT, (float)(pow(-1, (i + 1)) * (i + 1.0) / 10.0), NULL, NULL);
 
     Value *ret[VALCAP] = {0};
     unsigned int n = lparams(l, ret);
@@ -527,17 +527,17 @@ void lparams_basic() {
     if (!(n == 8))
         error("lparams_basic: number of parameters is incorrect (is %d, should be %d)", n, 8);
 
-    if (!feq(ret[0]->val, 0.1))
+    if (!feq(ret[0]->val, 0.1f))
         error("lparams_basic: param is incorrect (is %f, should be %f)", ret[0]->val, 0.1);
-    if (!feq(ret[1]->val, -0.2))
+    if (!feq(ret[1]->val, -0.2f))
         error("lparams_basic: param is incorrect (is %f, should be %f)", ret[1]->val, -0.2);
-    if (!feq(ret[2]->val, 0.3))
+    if (!feq(ret[2]->val, 0.3f))
         error("lparams_basic: param is incorrect (is %f, should be %f)", ret[2]->val, 0.3);
-    if (!feq(ret[4]->val, -0.1))
+    if (!feq(ret[4]->val, -0.1f))
         error("lparams_basic: param is incorrect (is %f, should be %f)", ret[3]->val, -0.1);
-    if (!feq(ret[5]->val, 0.2))
+    if (!feq(ret[5]->val, 0.2f))
         error("lparams_basic: param is incorrect (is %f, should be %f)", ret[4]->val, 0.2);
-    if (!feq(ret[6]->val, -0.3))
+    if (!feq(ret[6]->val, -0.3f))
         error("lparams_basic: param is incorrect (is %f, should be %f)", ret[5]->val, -0.3);
 
     pass("");

@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
 
     /* TODO: make it easy to construct 2d data? */
 
-    unsigned int nepoch = 16;
+    unsigned int nepoch = 64;
 
     Value *xs00 = valfloat(2.0);
     Value *xs01 = valfloat(3.0);
@@ -104,6 +104,7 @@ int main(int argc, char **argv) {
         for (int i = 0; i < params_len; i++)
             params[i]->grad = 0.0;
 
+        /* backward */
         valbwd(loss);
 
         /* optimizer step */

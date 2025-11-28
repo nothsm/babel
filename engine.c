@@ -85,7 +85,7 @@ Value *valalloc(unsigned int n) {
 
 /* TODO: add valfree */
 
-Value *valinit(Value *v, ValueType op, float val, Value *prev1, Value *prev2) {
+void valinit(Value *v, ValueType op, float val, Value *prev1, Value *prev2) {
     assert(prev1 != v);
     assert(prev2 != v);
 
@@ -96,8 +96,6 @@ Value *valinit(Value *v, ValueType op, float val, Value *prev1, Value *prev2) {
     v->prev2 = prev2;
 
     valcheck(v);
-
-    return v;
 }
 
 bool valeq(Value *v1, Value *v2) {
