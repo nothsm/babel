@@ -77,13 +77,13 @@ int main(int argc, char **argv) {
 
         /* optimizer step */
         for (int i = 0; i < params_len; i++)
-            params[i]->val += -0.1 * params[i]->grad;
+            params[i]->val += -0.1f * params[i]->grad;
 
         printf("loss: %.5f\n", loss->val);
     }
 
     printf("\n --- Training MLP... ---\n");
-    MLP *mlp = mlpalloc(nin, (int[]){4, 4, 1}, 3);
+    MLP *mlp = mlpalloc(nin, (unsigned int[]){4, 4, 1}, 3);
 
     mlpinit(mlp);
 
@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
 
         /* optimizer step */
         for (int i = 0; i < params_len; i++)
-            params[i]->val += -0.1 * params[i]->grad;
+            params[i]->val += -0.1f * params[i]->grad;
 
         printf("loss: %.5f\n", loss->val);
     }

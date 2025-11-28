@@ -49,18 +49,18 @@ void ninit(Neuron *n) {
     assert(n != NULL);
 
     for (int i = 0; i < n->nin; i++)
-        valinit(n->w + i, VAL_FLOAT, uniform(-1, 1), NULL, NULL);
+        valinit(n->w + i, VAL_FLOAT, (float)uniform(-1, 1), NULL, NULL);
 
-    valinit(n->b, VAL_FLOAT, uniform(-1, 1), NULL, NULL);
+    valinit(n->b, VAL_FLOAT, (float)uniform(-1, 1), NULL, NULL);
 
     ncheck(n);
 }
 
 /* TODO: generalize this to > 2 input dims */
 char *nshow(Neuron *n) {
-    unsigned int nalloc;
+    int nalloc;
+    unsigned int unsigned_nalloc;
     unsigned int oldalloc;
-    char *s;
 
     assert(n->nin >= 2);
     ncheck(n);
@@ -69,8 +69,11 @@ char *nshow(Neuron *n) {
 
     nalloc = snprintf(STRTAB + allocated, STRCAP, "Neuron(w=[%.3f, %.3f], b=%.3f, nin=%d)", n->w[0].val, n->w[1].val, n->b->val, n->nin); /* TODO: refactor global strtable printing */
     assert(nalloc >= 0);
-    assert(allocated + nalloc + 1 < STRCAP);
-    allocated += nalloc + 1;
+
+    unsigned_nalloc = (unsigned int)nalloc;
+
+    assert(allocated + unsigned_nalloc + 1 < STRCAP);
+    allocated += unsigned_nalloc + 1;
 
     return STRTAB + oldalloc;
 }
@@ -230,11 +233,12 @@ Value **mlpfwd(MLP *mlp, Value **x) {
     printf("xtmp[1] = %p\n", xtmp[1]);
     printf("xtmp[2] = %p\n", xtmp[2]);
 
-    assert(false);
     // printf("xtmp[3] = %p\n", xtmp[3]);
+
+    assert(false);
     
     for (int i = 0; i < mlp->nlayers; i++) {
-        unsigned int dim = lfwd(mlp->layers[i], xtmp[i], xtmp[i + 1]);
+        // unsigned int dim = lfwd(mlp->layers[i], xtmp[i], xtmp[i + 1]);
         // memcpy(x, buf, sizeof(Value*) * dim);
         // x = buf;
     }
@@ -251,7 +255,8 @@ Value **mlpfwd(MLP *mlp, Value **x) {
 
     // valcheck(out2[0]);
     // valcheck(out[0]);
-    valcheck(x);
+    for (int i = 0; i < mlp->layers[mlp->nlayers - 1]->nout; i++)
+        valcheck(x[i]);
 
     return x;
 
