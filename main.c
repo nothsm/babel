@@ -94,8 +94,8 @@ int main(int argc, char **argv) {
         valinit(loss, VAL_FLOAT, 0.0, NULL, NULL);
         for (int j = 0; j < 4; j++) {
             Value *ygt = ys[j];
-            Value **ypred = mlpfwd(mlp, xs[j]);
-            Value *l = valpow(valsub(ypred[0], ygt), 2);
+            Value *ypred = mlpfwd(mlp, xs[j])[0];
+            Value *l = valpow(valsub(ypred, ygt), 2);
             loss = valadd(loss, l);
         }
 

@@ -552,6 +552,7 @@ void valbwd(Value *v) {
  * - [ ] demo: llm training
  * - [ ] demo: llm inference
  * - [ ] demo: run on something funny like a DS
+ * - [ ] Fix Value printing in MLP training in main.c
  * - [ ] Systems-level performance optimization
  *   - [ ] DoD
  *   - [ ] Pooled arena allocation
