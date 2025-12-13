@@ -16,7 +16,6 @@
 #include <time.h>
 #include "babel.h"
 
-unsigned int MAGIC_SQUARE[9] = {2, 9, 4, 7, 5, 3, 6, 1, 8};
 
 /* TODO: make sure the alignof's are safe */
 #define alignof(type) ((size_t)&((struct { char c; type d; } *)0)->d) /* TODO: magic from stackoverflow */

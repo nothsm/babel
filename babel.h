@@ -197,3 +197,20 @@ typedef struct {
 
 char *bopshow(BinOp *);
 char *eshow(Expr *);
+
+/* ----------------------------------- alloc.c ------------------------------------ */
+
+typedef struct MyArena MyArena;
+
+struct MyArena {
+  MyArena *prev;
+  char *avail;
+  char *limit;
+};
+
+MyArena *arenanew(void);
+MyArena *arenadeinit(MyArena **ap);
+void *arenaalloc(MyArena *arena, long nbytes, const char *file, int line);
+void *arenacalloc(MyArena *arena, long count, long nbytes, const char *file, int line);
+void arenafree(MyArena *arena);
+

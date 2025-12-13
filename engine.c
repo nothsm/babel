@@ -1,5 +1,10 @@
 /*
- * run with: make test && ./test
+ * Author: Hilal Mufti <hilalmufti1@gmail.com>
+ * Date: 12/12/2025
+ *
+ * this module defines the core Value data structure as well as its basic operations 
+ * 
+ * run tests with make test && ./test
  */
 #include <assert.h>
 #include <math.h>
@@ -551,9 +556,12 @@ void valbwd(Value *v) {
  * - [ ] demo: llm inference
  * - [ ] demo: run on something funny like a DS
  * - [ ] Fix Value printing in MLP training in main.c
+ * - [ ] Add optimization + egraphs
+ * - [ ] support -nostdlib
  * - [ ] Systems-level performance optimization
  *   - [ ] DoD
  *   - [ ] Pooled arena allocation
+ * - [ ] Improve exceptions
  * 
  * 
  * - If you put these operations in a training loop, you don't want to allocate new memory on each iteration...
