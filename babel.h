@@ -208,8 +208,24 @@ struct MyArena {
   char *limit;
 };
 
+union Align {
+  int i;
+  long l;
+  long *lp;
+  void *p;
+  void (*fp)(void);
+  float f;
+  double d;
+  long double ld;  
+};
+
+union Header {
+  MyArena arena;
+  union Align align;
+};
+
 MyArena *arenanew(void);
-MyArena *arenadeinit(MyArena **ap);
+MyArena *arenadrop(MyArena **ap); /* this has a weird name because you cant use arenafree */
 void *arenaalloc(MyArena *arena, long nbytes, const char *file, int line);
 void *arenacalloc(MyArena *arena, long count, long nbytes, const char *file, int line);
 void arenafree(MyArena *arena);

@@ -85,10 +85,6 @@ void *arenamalloc(unsigned int nbytes, void *ctx) {
     return aalloc(a, nbytes, 1);
 }
 
-void arenafree(void *ptr, void *ctx) {
-    /* Do nothing */
-}
-
 /* TODO: Fix alignment */
 void *arenarealloc(void *ptr, unsigned int nbytes, void *ctx) {
     Arena *a = ctx;
